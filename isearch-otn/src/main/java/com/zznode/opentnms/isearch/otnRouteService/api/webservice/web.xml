@@ -1,0 +1,14 @@
+<listener>  
+    <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>  
+</listener>  
+  
+<servlet>  
+    <servlet-name>WSServlet</servlet-name>  
+    <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>  
+    <load-on-startup>1</load-on-startup>  
+</servlet>  
+  
+<servlet-mapping>  
+    <servlet-name>WSServlet</servlet-name>  
+    <url-pattern>/OtnRouteService</url-pattern>  
+</servlet-mapping> 
