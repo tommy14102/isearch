@@ -15,7 +15,8 @@ public class JettyService {
 
 	public void runJetty() {
 		
-		Endpoint.publish(PropertiesHander.getProperty("webserviceURI"), Main.factory.getBean("routeCalculation"));   
+		Endpoint.publish( "http://localhost:8088/isearch-otnRouteService/services/RouteCalculation",  Main.factory.getBean("routeCalculation"));   
+		//Endpoint.publish(PropertiesHander.getProperty("webserviceURI"), new RouteCalculation());   
 		/**
 	    Server server = new Server();
 	    SelectChannelConnector connector = new SelectChannelConnector();

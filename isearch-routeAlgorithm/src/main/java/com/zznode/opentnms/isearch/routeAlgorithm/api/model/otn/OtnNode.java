@@ -29,6 +29,11 @@ public class OtnNode extends Node implements Serializable{
 		this.tsnids = tsnids;
 	}
 
-	
+	@Override
+	public String toString() {
+		return "OtnNode [id=" + super.getId() + "]";
+	}
 
+	
+	
 }

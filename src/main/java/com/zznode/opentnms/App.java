@@ -19,17 +19,6 @@ public class App
 {
     public static void main( String[] args ) throws Exception
     {
-    	      
-        System.out.println( "Hello World!2" );
-        System.out.println(223312  );
-        String endpoint_1="http://localhost:8088/isearch-otnRouteService/services/RouteCalculation";
-        Service service = new Service();
-        Call call=(Call)service.createCall();
-        call.setOperationName(new QName(endpoint_1,"calculate"));
-        call.setTargetEndpointAddress(new URL(endpoint_1));
-        String result=(String)call.invoke(new Object[]{});
-        System.out.println("result="+result); 
-        
     	RouteCalculationInput routeCalculationInput = new RouteCalculationInput();
     	routeCalculationInput.setAendme("UUID:11d80a82-6c54-11e2-9812-e006e6ca1f18");
     	routeCalculationInput.setZendme("UUID:76cd8702-01ca-11e4-bd57-9439e54d13ef");

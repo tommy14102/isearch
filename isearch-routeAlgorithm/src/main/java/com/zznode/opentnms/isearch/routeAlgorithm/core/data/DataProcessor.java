@@ -39,7 +39,7 @@ public abstract class DataProcessor<T extends Link> {
 	     log.info("开始组装邻接矩阵");
 	     for (Iterator<T> iter = linklist.iterator(); iter.hasNext();) {
 	    	 Link topo =  iter.next();
-	         log.info("组装邻接矩阵,topoid：" + topo.getId());
+	         log.info("组装邻接矩阵,aend：" + topo.getAendnode() + ",zend: "+ topo.getZendnode());
 	         matrix.addArc(topo.getAendnode(), topo.getZendnode(), topo.getDirection(), topo);
 	     }
 	        

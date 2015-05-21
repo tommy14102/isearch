@@ -72,6 +72,7 @@ public class BusiAnalyser {
 		}
 		
 		//2.拓扑中的每两个点都需要进行计算
+		/**
 		Matrix matrix = (Matrix)graph;
 		Section[][] route =  matrix.getMatrix();
 		for (int i = 0; i < route.length; i++) {
@@ -84,6 +85,14 @@ public class BusiAnalyser {
 					}
 				}
 		}
+		*/
+		List<ZdResult> resultlist = analyseOtnResource( "16020002", "16040002" );
+		String key = "16020002" + "|" + "16040002" ;
+		cachedClient.set( memcacTag +key, 0, resultlist );
+		
+		List<ZdResult> resultlist2 = analyseOtnResource( "16040002", "16030001" );
+		String key2 = "16040002" + "|" + "16030001" ;
+		cachedClient.set( memcacTag +key2, 0, resultlist2 );
 	}
 	
 	private String getCtpInfo( List<WdmSncRoute>  routelist , boolean isforwardorder){
@@ -189,6 +198,8 @@ public class BusiAnalyser {
     	  		wdmsnc.setLayerdesc( Rate.odu4.getName() );
     	  	}else if( ConstBusiness.ochrateList.contains( rate ) ){	
     	  		wdmsnc.setLayerdesc( Rate.och.getName() );
+    	  	}else{
+    	  		logger.error("missing layerdesc , wdmsncid::" + wdmsnc.getObjectId());
     	  	}
 	    	
 	    	String headptpStr = wdmsnc.getWdmsncroutelist().get(0).m_AEndMeObjectId + "|" + wdmsnc.getWdmsncroutelist().get(0).m_AEndPtpObjectId ; 
@@ -226,29 +237,18 @@ public class BusiAnalyser {
 	  	List<DbWdmSnc> wdmsncOdu4Result = new ArrayList<DbWdmSnc>();
 	  	List<DbWdmSnc> wdmsncOchResult = new ArrayList<DbWdmSnc>();
 	  	
-	  	Set<String> sss = new HashSet<String>();
 	  	//7.划分各层数据
 	  	for (Iterator<DbWdmSnc> iter = wdmsnclist.iterator(); iter.hasNext();) {
 			DbWdmSnc wdmsnc = iter.next();
 			if( !wdmsnc.getLayerdesc().equals( Rate.och.getName()) ){
 				
-				if(ConstBusiness.odumap.get(wdmsnc.getHeadctpSer())==null){
-					
-					sss.add(wdmsnc.getHeadctpSer());
-					if(wdmsnc.getHeadctpSer()==null || wdmsnc.getHeadctpSer().equals("")){
-						sss.add(wdmsnc.getObjectId());
-					}
-				}
-				if( sss.size() > 0 ){
-					for (Iterator iterator = sss.iterator(); iterator.hasNext();) {
-						String string = (String) iterator.next();
-						System.out.println(string);
-						
-					}
-					return null;
+				ODU odu = ConstBusiness.getOduByCtp(wdmsnc.getHeadctpSer());
+				if(odu==null){
+					logger.error("分析CTP失败,ctp:" + wdmsnc.getHeadctpSer() + ",sncid:"+ wdmsnc.getObjectId());
+					continue;
 				}
 				
-				ODU sncodu = (ODU)ConstBusiness.odumap.get(wdmsnc.getHeadctpSer()).newInstance();
+				ODU sncodu = ConstBusiness.getOduByCtp(wdmsnc.getHeadctpSer());
 				sncodu.setRate(wdmsnc.getRate());
 				sncodu.setSncobjectid(wdmsnc.getObjectId());
 				wdmsnc.setOdu(sncodu);
@@ -277,6 +277,14 @@ public class BusiAnalyser {
 			}
 		}
 	  	
+	  	logger.info("wdmsncClientResult count::" + wdmsncClientResult.size());
+	  	logger.info("wdmsncOdu0Result count::" + wdmsncOdu0Result.size());
+	  	logger.info("wdmsncOdu1Result count::" + wdmsncOdu1Result.size());
+	  	logger.info("wdmsncOdu2Result count::" + wdmsncOdu2Result.size());
+	  	logger.info("wdmsncOdu3Result count::" + wdmsncOdu3Result.size());
+	  	logger.info("wdmsncOdu4Result count::" + wdmsncOdu4Result.size());
+	  	logger.info("wdmsncOchResult count::" + wdmsncOchResult.size());
+	  	
 	    //8.处理odu0层路径
 	    for (int i = 0; i < wdmsncOdu0Result.size(); i++) {
 	    	DbWdmSnc wdmsnc = wdmsncOdu0Result.get(i);
@@ -284,7 +292,7 @@ public class BusiAnalyser {
     		//查询所有client层数据
     		for (int j = 0; j < wdmsncClientResult.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncClientResult.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
 					ODU odu = wdmsncin.getOdu();
 					odu0.setDsr((DSR)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -298,7 +306,7 @@ public class BusiAnalyser {
 			ODU1 odu1 = (ODU1)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncClientResult.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu1.getDsrlist().add((DSR)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -306,7 +314,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu0Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu1.getOdu0list().add((ODU0)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -320,7 +328,7 @@ public class BusiAnalyser {
 	    	ODU2 odu2 = (ODU2)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncClientResult.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu2.getDsrlist().add((DSR)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -328,7 +336,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu0Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu2.getOdu0list().add((ODU0)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -336,7 +344,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu1Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu2.getOdu1list().add((ODU1)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -350,7 +358,7 @@ public class BusiAnalyser {
 	    	ODU3 odu3 = (ODU3)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncClientResult.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu3.getDsrlist().add((DSR)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -358,7 +366,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu0Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu3.getOdu0list().add((ODU0)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -366,7 +374,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu1Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu3.getOdu1list().add((ODU1)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -374,7 +382,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu2Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu2Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu3.getOdu2list().add((ODU2)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -388,7 +396,7 @@ public class BusiAnalyser {
 	    	ODU4 odu4 = (ODU4)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncClientResult.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu4.getDsrlist().add((DSR)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -396,7 +404,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu0Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu4.getOdu0list().add((ODU0)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -404,7 +412,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu1Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu4.getOdu1list().add((ODU1)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -412,7 +420,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu2Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu2Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu4.getOdu2list().add((ODU2)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -420,7 +428,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu3Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu3Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					odu4.getOdu3list().add((ODU3)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -433,13 +441,9 @@ public class BusiAnalyser {
 	    	DbWdmSnc wdmsnc = wdmsncOchResult.get(i);
 	    	OCH och = new OCH();
 	    	wdmsnc.setOdu(och);
-	    	System.out.println(wdmsnc.getObjectId());
-	    	if("UUID:b5392c2b-210a-11e4-9365-005056862639".equals(wdmsnc.getObjectId())){
-	    		System.out.println("herer");
-	    	}
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncClientResult.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					och.getDsrlist().add((DSR)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -447,7 +451,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu0Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					och.getOdu0list().add((ODU0)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -455,7 +459,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu1Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					och.getOdu1list().add((ODU1)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -463,8 +467,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu2Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu2Result.get(j);
-    			
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					och.getOdu2list().add((ODU2)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -472,7 +475,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu3Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu3Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					och.getOdu3list().add((ODU3)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -480,7 +483,7 @@ public class BusiAnalyser {
 			}
 	    	for (int j = 0; j < wdmsncOdu4Result.size(); j++) {
     			DbWdmSnc wdmsncin = wdmsncOdu4Result.get(j);
-				if( wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 					ODU odu = wdmsncin.getOdu();
 					och.getOdu4list().add((ODU4)odu);
 					wdmsncin.setIsCaculated(Boolean.TRUE);
@@ -490,12 +493,12 @@ public class BusiAnalyser {
 
 	    List<DbWdmSnc> wdmsncAllResult = new ArrayList<DbWdmSnc>();
 	    wdmsncAllResult.addAll(wdmsncClientResult);
-	    wdmsncAllResult.addAll(wdmsncOchResult);
-	    wdmsncAllResult.addAll(wdmsncOdu4Result);
-	    wdmsncAllResult.addAll(wdmsncOdu3Result);
-	    wdmsncAllResult.addAll(wdmsncOdu2Result);
-	    wdmsncAllResult.addAll(wdmsncOdu1Result);
 	    wdmsncAllResult.addAll(wdmsncOdu0Result);
+	    wdmsncAllResult.addAll(wdmsncOdu1Result);
+	    wdmsncAllResult.addAll(wdmsncOdu2Result);
+	    wdmsncAllResult.addAll(wdmsncOdu3Result);
+	    wdmsncAllResult.addAll(wdmsncOdu4Result);
+	    wdmsncAllResult.addAll(wdmsncOchResult);
 	  	
 	    
 	    //14.整合查询结果
@@ -529,8 +532,8 @@ public class BusiAnalyser {
 	    		zda.setZendcardmodel(route.zcardmodel);
 	    		zda.setZendctp(route.m_ZEndCtpId);
 	    	  		
-	    		if( zdResult.getZdmap().get( zda.getAendzdid() )!=null ){
-	    			LinkedList<ZdResultSingle>  zdlist = zdResult.getZdmap().get( zda.getAendzdid() );
+	    		if( zdmap.get( zda.getAendzdid() )!=null ){
+	    			LinkedList<ZdResultSingle>  zdlist = zdmap.get( zda.getAendzdid() );
 	    			zdlist.add(zda);
 	    		}
 	    		else{
@@ -542,6 +545,7 @@ public class BusiAnalyser {
 	    	}
 	    	zdResult.setZdmap(zdmap);
 	    	allrst.add(zdResult);
+	    	logger.info("zdResult info::" + zdResult);
 	  	}
 	  	
 	  	return allrst ; 

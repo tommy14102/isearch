@@ -10,8 +10,15 @@ public class CaculatorParam {
 	
 	private Policy policy ; 
 	private Integer count ;
+	private Integer routeCount;
 	
 	
+	public Integer getRouteCount() {
+		return routeCount;
+	}
+	public void setRouteCount(Integer routeCount) {
+		this.routeCount = routeCount;
+	}
 	public String getAend() {
 		return aend;
 	}

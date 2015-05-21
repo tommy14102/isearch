@@ -1,6 +1,7 @@
 package com.zznode.opentnms.isearch.otnRouteService.api.model;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class RouteCalculationOutput {
@@ -10,7 +11,7 @@ public class RouteCalculationOutput {
 	private String routeseq;
 	private Integer rate;
 	private String ProtectionType;
-	private ArrayList<RouteCalculationResult> routeCalculationResult ;
+	private List<RouteCalculationResult> routeCalculationResult ;
 	
 	public String getRoutePlanobjectid() {
 		return routePlanobjectid;
@@ -42,11 +43,11 @@ public class RouteCalculationOutput {
 	public void setProtectionType(String protectionType) {
 		ProtectionType = protectionType;
 	}
-	public ArrayList<RouteCalculationResult> getRouteCalculationResult() {
+	public List<RouteCalculationResult> getRouteCalculationResult() {
 		return routeCalculationResult;
 	}
 	public void setRouteCalculationResult(
-			ArrayList<RouteCalculationResult> routeCalculationResult) {
+			List<RouteCalculationResult> routeCalculationResult) {
 		this.routeCalculationResult = routeCalculationResult;
 	}
 	

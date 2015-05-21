@@ -9,7 +9,7 @@
 	
 	<appender name="File" class="org.apache.log4j.RollingFileAppender">
 		<param name="Encoding" value="UTF-8" /> 
-		<param name="File" value="${isearch.log.path}/isearch-otnRouteService.log"/>
+		<param name="File" value="D:/isearch-otnRouteService.log"/>
 		<param name="MaxFileSize" value="20MB"/>
 		<param name="MaxBackupIndex" value="5"/>
 		<layout class="org.apache.log4j.PatternLayout">

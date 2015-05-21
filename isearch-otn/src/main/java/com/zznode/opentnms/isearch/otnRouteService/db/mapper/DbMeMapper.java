@@ -14,7 +14,6 @@ public class DbMeMapper implements RowMapper<DbMe> {
 		DbMe me = new DbMe();
 		me.setObjectId( resultset.getString("ObjectId"));             
 		me.setMeId( resultset.getString("MeId"));                
-		me.setNativeName( resultset.getString("NativeName"));                
 		me.setModel(  resultset.getString("Model"));       
 		me.setVendor( resultset.getString("Vendor"));                 
 		me.setManagementDomain(  resultset.getString("ManagementDomain"));              

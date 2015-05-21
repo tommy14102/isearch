@@ -8,8 +8,19 @@ public class ODU implements Serializable{
 	
 	private Integer rate ;
 	private String sncobjectid;
-
+	protected Integer index ;
 	
+	protected String getFreeODU(Integer rate){
+		return null;
+	}
+	public Integer getIndex() {
+		return index;
+	}
+
+	public void setIndex(Integer index) {
+		this.index = index;
+	}
+
 	public Integer getRate() {
 		return rate;
 	}

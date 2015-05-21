@@ -48,9 +48,10 @@ public class Main {
 	public static void main(String[] args) {
 		
 		try {
+			logger.info("启动加载程序");
 			Main.start();
 		} catch (Exception e) {
-			logger.debug("启动异常", e);
+			logger.error("启动异常", e);
 		}
 		
 	}

@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import com.zznode.opentnms.isearch.otnRouteService.consts.ConstBusiness;
+
 public class ZdResult implements Serializable{
 
 	private static final long serialVersionUID = -4290935550867512223L;
@@ -20,31 +22,33 @@ public class ZdResult implements Serializable{
 	
 	private Map<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
 
-	public String getODUinfo(){
+	public String getODUinfo( Integer rate ){
 		
 		if( odu instanceof DSR){
-			return odu.getClass().getSimpleName();
+			DSR dsr = (DSR)odu;
+			return dsr.getFreeODU(rate);
 		}
 		
 		if( odu instanceof ODU0){
-			return odu.getClass().getSimpleName();
+			ODU0 odu0 = (ODU0)odu;
+			return odu0.getFreeODU(rate); 
 		}
 		
 		if( odu instanceof ODU1){
 			ODU1 odu1 = (ODU1)odu;
-			return odu1.getFreeODU(); 
+			return odu1.getFreeODU(rate); 
 		}
 		if( odu instanceof ODU2){
 			ODU2 odu2 = (ODU2)odu;
-			return odu2.getFreeODU(); 
+			return odu2.getFreeODU(rate); 
 		}
 		if( odu instanceof ODU3){
 			ODU3 odu3 = (ODU3)odu;
-			return odu3.getFreeODU(); 
+			return odu3.getFreeODU(rate); 
 		}
 		if( odu instanceof ODU4){
 			ODU4 odu4 = (ODU4)odu;
-			return odu4.getFreeODU(); 
+			return odu4.getFreeODU(rate); 
 		}
 		if( odu instanceof OCH){
 			OCH och = (OCH)odu;
@@ -136,94 +140,111 @@ public class ZdResult implements Serializable{
 		sb.append(" ZdResult [rate:" + rate + ", ratedesc:" + ratedesc + "]").append("\r\n");
 		sb.append(" ZdResult [sncid:" + sncid + ", sncname:" + sncname + "]").append("\r\n");
 		sb.append(" ZdResult [oduType:" + odu.getClass().getSimpleName() + "]").append("\r\n");
+		sb.append(" ZdResult [oduIndex:" + odu.getIndex() + "]").append("\r\n");
 		if( odu instanceof DSR){
 			DSR dsr = (DSR)odu;
-			sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+			sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+			sb.append(" ZdResult [DSR-Free-Resource:"+ dsr.getFreeODU(87)).append("\r\n");
 		}
 		
 		if( odu instanceof ODU0){
 			ODU0 odu0 = (ODU0)odu;
 			DSR dsr = odu0.getDsr();
-			sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+			sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+			sb.append(" ZdResult [DSR-Free-Resource:"+ odu0.getFreeODU(87)).append("\r\n");
 		}
 		
 		if( odu instanceof ODU1){
 			ODU1 odu1 = (ODU1)odu;
 			for (int i = 0; i < odu1.getDsrlist().size(); i++) {
 				DSR dsr = odu1.getDsrlist().get(i);
-				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [DSR-Free-Resource:"+ odu1.getFreeODU(87)).append("\r\n");
 			for (int i = 0; i < odu1.getOdu0list().size(); i++) {
 				ODU0 odu0 = odu1.getOdu0list().get(i);
 				sb.append(" ZdResult ["+ odu0.getClass().getSimpleName()  + ",ODU0sncid:").append(odu0.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU0-Free-Resource:"+ odu1.getFreeODU(87)).append("\r\n");
 		}
 		
 		if( odu instanceof ODU2){
 			ODU2 odu2 = (ODU2)odu;
 			for (int i = 0; i < odu2.getDsrlist().size(); i++) {
 				DSR dsr = odu2.getDsrlist().get(i);
-				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [DSR-Free-Resource:"+ odu2.getFreeODU(87)).append("\r\n");
 			for (int i = 0; i < odu2.getOdu0list().size(); i++) {
 				ODU0 odu0 = odu2.getOdu0list().get(i);
 				sb.append(" ZdResult ["+ odu0.getClass().getSimpleName()  + ",ODU0sncid:").append(odu0.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU0-Free-Resource:"+ odu2.getFreeODU(87)).append("\r\n");
 			for (int i = 0; i < odu2.getOdu1list().size(); i++) {
 				ODU1 odu1 = odu2.getOdu1list().get(i);
 				sb.append(" ZdResult ["+ odu1.getClass().getSimpleName()  + ",ODU1sncid:").append(odu1.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU1-Free-Resource:"+ odu2.getFreeODU(76)).append("\r\n");
 		}
 		
 		if( odu instanceof ODU3){
 			ODU3 odu3 = (ODU3)odu;
 			for (int i = 0; i < odu3.getDsrlist().size(); i++) {
 				DSR dsr = odu3.getDsrlist().get(i);
-				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [DSR-Free-Resource:"+ odu3.getFreeODU(87)).append("\r\n");
 			for (int i = 0; i < odu3.getOdu0list().size(); i++) {
 				ODU0 odu0 = odu3.getOdu0list().get(i);
 				sb.append(" ZdResult ["+ odu0.getClass().getSimpleName()  + ",ODU0sncid:").append(odu0.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU0-Free-Resource:"+ odu3.getFreeODU(87)).append("\r\n");
 			for (int i = 0; i < odu3.getOdu1list().size(); i++) {
 				ODU1 odu1 = odu3.getOdu1list().get(i);
 				sb.append(" ZdResult ["+ odu1.getClass().getSimpleName()  + ",ODU1sncid:").append(odu1.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU1-Free-Resource:"+ odu3.getFreeODU(76)).append("\r\n");
 			for (int i = 0; i < odu3.getOdu2list().size(); i++) {
 				ODU2 odu2 = odu3.getOdu2list().get(i);
 				sb.append(" ZdResult ["+ odu2.getClass().getSimpleName() + ",ODU2sncid:").append(odu2.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU1-Free-Resource:"+ odu3.getFreeODU(77)).append("\r\n");
 		}
 		
 		if( odu instanceof ODU4){
 			ODU4 odu4 = (ODU4)odu;
 			for (int i = 0; i < odu4.getDsrlist().size(); i++) {
 				DSR dsr = odu4.getDsrlist().get(i);
-				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [DSR-Free-Resource:"+ odu4.getFreeODU(87)).append("\r\n");
 			for (int i = 0; i < odu4.getOdu0list().size(); i++) {
 				ODU0 odu0 = odu4.getOdu0list().get(i);
 				sb.append(" ZdResult ["+ odu0.getClass().getSimpleName()  + ",ODU0sncid:").append(odu0.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU0-Free-Resource:"+ odu4.getFreeODU(87)).append("\r\n");
 			for (int i = 0; i < odu4.getOdu1list().size(); i++) {
 				ODU1 odu1 = odu4.getOdu1list().get(i);
 				sb.append(" ZdResult ["+ odu1.getClass().getSimpleName()  + ",ODU1sncid:").append(odu1.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU1-Free-Resource:"+ odu4.getFreeODU(76)).append("\r\n");
 			for (int i = 0; i < odu4.getOdu2list().size(); i++) {
 				ODU2 odu2 = odu4.getOdu2list().get(i);
 				sb.append(" ZdResult ["+ odu2.getClass().getSimpleName()  + ",ODU2sncid:").append(odu2.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU1-Free-Resource:"+ odu4.getFreeODU(77)).append("\r\n");
 			for (int i = 0; i < odu4.getOdu3list().size(); i++) {
 				ODU3 odu3 = odu4.getOdu3list().get(i);
 				sb.append(" ZdResult ["+ odu3.getClass().getSimpleName()  + ",ODU3sncid:").append(odu3.getSncobjectid()).append("]").append("\r\n");
 			}
+			sb.append(" ZdResult [ODU1-Free-Resource:"+ odu4.getFreeODU(78)).append("\r\n");
 		}
 		
 		if( odu instanceof OCH){
 			OCH och = (OCH)odu;
 			for (int i = 0; i < och.getDsrlist().size(); i++) {
 				DSR dsr = och.getDsrlist().get(i);
-				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
 			}
 			for (int i = 0; i < och.getOdu0list().size(); i++) {
 				ODU0 odu0 = och.getOdu0list().get(i);

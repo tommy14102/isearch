@@ -73,7 +73,7 @@ public class ResourceManager {
 	  	sb.append(" and wdmsnc.zendmeobjectid in ( select objectid from me  where juzhanobjectid  = '").append(zendZDid).append("' ) ");
 	  	sb.append(" and wdmsnc.direction='").append(direction).append("'");
 	  	
-	  	//sb.append(" and wdmsnc.objectid in ('UUID:b5392c2b-210a-11e4-9365-005056862639','UUID:b5392c2b-210a-11e4-9365-005056862639') ");
+	  	//sb.append(" and wdmsnc.objectid in ('UUID:b5422ceb-210a-11e4-9365-005056862639') ");
 	  	return dbUtil.query(sb.toString(), new DbWdmSncMapper());
 	}
 	
