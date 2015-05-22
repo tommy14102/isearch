@@ -1,0 +1,40 @@
+<assembly>
+  <id>bin</id>
+  <formats>
+    <format>tar.gz</format>
+  </formats>
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <fileSets>
+        <fileSet>
+            <directory>src/main/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/doc</directory>
+            <outputDirectory>docs</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/readme</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/${profiles.active}</directory>
+            <outputDirectory>cfg</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/${profiles.active}</directory>
+            <outputDirectory>cfg</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/log</directory>
+            <outputDirectory>log</outputDirectory>
+        </fileSet>
+   </fileSets>
+   <dependencySets>  
+        <dependencySet>  
+            <useProjectArtifact>true</useProjectArtifact>  
+            <outputDirectory>lib</outputDirectory><!-- 将scope为runtime的依赖包打包到lib目录下。 -->  
+            <scope>runtime</scope>  
+        </dependencySet>  
+    </dependencySets>  
+</assembly>
