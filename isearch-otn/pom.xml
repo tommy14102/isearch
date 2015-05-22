@@ -18,7 +18,26 @@
     <org.springframework.version>3.2.2.RELEASE</org.springframework.version>  
     <jettyVersion>7.2.0.v20101020</jettyVersion>
   </properties>
-                       
+  
+      <profiles>  
+            <profile>  
+                 <id>dev</id>  
+                 <properties>  
+            		<profiles.active>resources</profiles.active>  
+            		<deploy.url>http://host:port/manager/text</deploy.url>  
+        		 </properties>  
+                 <activation>  
+                        <activeByDefault>true</activeByDefault>  
+                 </activation>  
+            </profile>  
+            <profile>  
+                 <id>product</id>  
+                 <properties>  
+            		<profiles.active>resource-product</profiles.active>  
+        		 </properties> 
+            </profile>  
+     </profiles>  
+                          
    <build> 
     <plugins>
       <plugin>
@@ -38,6 +57,74 @@
           <mainClass>com.zznode.opentnms.isearch.otnRouteService.api.webservice.HelloWorld</mainClass>
         </configuration>
       </plugin>
+      <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-assembly-plugin</artifactId>
+    <version>2.2.1</version>
+    <configuration>
+      <descriptors>
+        <descriptor>src/main/assembly.xml</descriptor>
+      </descriptors>
+    </configuration>
+    <executions>
+      <execution>
+        <id>make-assembly</id>
+        <phase>package</phase>
+        <goals>
+          <goal>single</goal>
+        </goals>
+      </execution>
+    </executions>
+  </plugin>
+    <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-source-plugin</artifactId>
+    <version>2.1.2</version>
+    <executions>
+      <execution>
+        <id>attach-sources</id>
+        <phase>package</phase>
+        <goals>
+          <goal>jar-no-fork</goal>
+        </goals>
+      </execution>
+    </executions>
+  </plugin>
+  <plugin>          
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-javadoc-plugin</artifactId>
+    <version>2.7</version>
+    <executions>
+      <execution>
+        <id>attach-javadocs</id>
+        <phase>package</phase>
+          <goals>
+            <goal>jar</goal>
+          </goals>
+      </execution>
+    </executions>
+  </plugin>  
+      <plugin>  
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-jar-plugin</artifactId>  
+       <version>2.4</version>  
+                    <executions>  
+                        <execution>  
+                            <id>default-jar</id>  
+                            <phase>package</phase>  
+                            <goals>  
+                                <goal>jar</goal>  
+                            </goals>  
+                            <configuration> 
+                                <excludes>  
+                                    <exclude>**/*.xml</exclude>  
+                                    <exclude>**/*.properties</exclude>  
+                                </excludes> 
+                            </configuration> 
+                        </execution> 
+                    </executions>  
+                </plugin>  
+                
     </plugins>
   </build>
   
@@ -46,7 +133,6 @@
       <groupId>junit</groupId> 
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
-      <scope>test</scope>
     </dependency>
             <dependency>  
             <groupId>org.springframework</groupId>  
@@ -154,6 +240,11 @@
 	<groupId>com.eaio.uuid</groupId>
 	<artifactId>uuid</artifactId>
 	<version>3.2</version>
+</dependency>
+<dependency>
+	<groupId>classworlds</groupId>
+	<artifactId>classworlds</artifactId>
+	<version>1.0.1</version>
 </dependency>
   </dependencies>
 </project>

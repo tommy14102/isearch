@@ -26,6 +26,6 @@
 	</bean>  
 	
 	<!--bean通过注解方式注册 -->
-	<context:component-scan base-package="com.zznode.opentnms.isearch.otnRouteService"/>
+	<context:component-scan base-package="com.zznode.opentnms.isearch"/>
  	
 </beans>
