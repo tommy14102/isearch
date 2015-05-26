@@ -3,6 +3,7 @@ package com.zznode.opentnms.isearch.otnRouteService.api;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,14 +23,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
+import com.zznode.opentnms.isearch.model.bo.ZdResult;
+import com.zznode.opentnms.isearch.model.bo.ZdResultSingle;
 import com.zznode.opentnms.isearch.otnRouteService.api.model.RouteCalculationInput;
 import com.zznode.opentnms.isearch.otnRouteService.api.model.RouteCalculationOutput;
 import com.zznode.opentnms.isearch.otnRouteService.api.model.RouteCalculationResult;
 import com.zznode.opentnms.isearch.otnRouteService.api.model.RouteCalculationResultRoute;
 import com.zznode.opentnms.isearch.otnRouteService.cache.CachedClient;
-import com.zznode.opentnms.isearch.otnRouteService.consts.ConstBusiness;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ZdResult;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ZdResultSingle;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbMe;
 import com.zznode.opentnms.isearch.otnRouteService.manage.ResourceManager;
 import com.zznode.opentnms.isearch.otnRouteService.util.PropertiesHander;
@@ -39,8 +40,12 @@ import com.zznode.opentnms.isearch.routeAlgorithm.api.enumrate.Policy;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.BusinessAvator;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorParam;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorResult;
+import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorResultWay;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorResultWayRoute;
+import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Link;
+import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Section;
 import com.zznode.opentnms.isearch.routeAlgorithm.plugin.algorithm.caculator_dfs.DFS4Otn;
+import com.zznode.opentnms.isearch.routeAlgorithm.plugin.algorithm.caculator_dijkstra.Dijkstra4OtnV2;
 
 @WebService
 @SOAPBinding(style=Style.RPC)
@@ -97,7 +102,12 @@ public class RouteCalculation {
 			}
 		
 			//3.查询非直达的最短路径
-			output = findJumpedpath(input, aendzd, zendzd, aendme, zendme);
+			if(PropertiesHander.getProperty("newRoutemode").equals("true")){
+				output = findJumpedpathV2(input, aendzd, zendzd, aendme, zendme);
+			}
+			else{
+				output = findJumpedpath(input, aendzd, zendzd, aendme, zendme);
+			}
 			
 			return output;
 			
@@ -314,6 +324,143 @@ public class RouteCalculation {
 		if(routeCalculationResultlist.size()>2){
 			routeCalculationResultlist = routeCalculationResultlist.subList(0, 2);
 		}
+		
+		RouteCalculationOutput ways = new RouteCalculationOutput();
+	    ways.setRoutePlanobjectid( UuidUtil.randomUUID());
+	    ways.setRate(input.getRate());
+	    ways.setProtectionType(input.getProtectionType());
+	    ways.setRouteCalculationResult(routeCalculationResultlist);
+	    
+	    return ways;
+	}
+	
+	
+	/**
+	 * 非直达路径的搜索
+	 * @param input
+	 * @param aendzd
+	 * @param zendzd
+	 * @param aendme
+	 * @param zendme
+	 * @return
+	 */
+	private  RouteCalculationOutput findJumpedpathV2(RouteCalculationInput input , String aendzd , String zendzd , String aendme, String zendme){
+		
+		ISearch isearch = new ISearch();
+		
+		BusinessAvator businessAvator = new BusinessAvator();
+		businessAvator.setKey( PropertiesHander.getProperty("BusinessAvator") );
+		    
+		CaculatorParam param = new CaculatorParam();
+	    param.setAend(aendzd);
+	    param.setZend(zendzd);
+	    param.setCount(2);
+	    param.setPolicy(Policy.LESS_JUMP);
+	    param.setAendme(aendme);
+	    param.setZendme(zendme);
+	    param.setRate(input.getRate());
+	    
+		CaculatorResult result = isearch.search(businessAvator.getKey(), param, new Dijkstra4OtnV2());
+			
+		if( result ==null ){
+			return null;
+		}
+		
+		RouteCalculationResult mainRoute = new RouteCalculationResult();
+		mainRoute.setZdCount(0);
+		mainRoute.setBusiCount(0);
+		RouteCalculationResult bakRoute = new RouteCalculationResult();
+		bakRoute.setZdCount(0);
+		bakRoute.setBusiCount(0);
+		
+		ArrayList<RouteCalculationResultRoute> mainRoutelist = new ArrayList<RouteCalculationResultRoute>();
+		ArrayList<RouteCalculationResultRoute> bakRoutelist = new ArrayList<RouteCalculationResultRoute>();
+		
+		mainRoute.setRoute(mainRoutelist);
+		bakRoute.setRoute(bakRoutelist);
+		
+		boolean hasBak = true ;
+		
+		CaculatorResultWay caculatorResultWay = result.getWays().get(0);
+		LinkedList<CaculatorResultWayRoute> routelist = caculatorResultWay.getRouts();
+		
+		//合并选取结果
+		for (int j = 0; j < routelist.size(); j++) {
+			CaculatorResultWayRoute caculatorResultWayRoute = routelist.get(j);
+			Section section = (Section)caculatorResultWayRoute.getAttrMap().get("section");
+			
+			List<Link> links = section.getLinklist();
+			Collections.sort(links, new Comparator<Link>() {
+
+				public int compare(Link o1, Link o2) {
+					return (int)(o1.getJump() - o2.getJump()) ;
+				}
+				
+			});
+			
+			if( links.size() == 0  ){
+				return null;
+			}
+			else if( links.size() < 2  ){
+				hasBak = false ;
+			}
+			
+			ZdResult zdResult = (ZdResult)links.get(0).getAttrMap().get("ZdResultInfo");
+			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+			for (LinkedList<ZdResultSingle> linkedList : allzd) {
+				for (int k = 0; k < linkedList.size(); k++) {
+					ZdResultSingle zdResultSingle = linkedList.get(k);
+
+					RouteCalculationResultRoute route = new RouteCalculationResultRoute(); 
+					route.setAendmeobjectid( zdResultSingle.getAendmeid() );
+					route.setAendptpobjectid( zdResultSingle.getAendptpid() );
+					route.setAtimeSlots(zdResultSingle.getAendctp());
+					route.setZendmeobjectid(zdResultSingle.getZendmeid());
+					route.setZendptpobjectid(zdResultSingle.getZendptpid());
+					route.setZtimeSlots(zdResultSingle.getZendctp());
+					
+					mainRoutelist.add(route);
+				}
+			}
+			
+			mainRoute.setZdCount( mainRoute.getZdCount() + zdmap.size() );
+			mainRoute.setBusiCount( mainRoute.getBusiCount() + 1 );
+			
+			
+			if(hasBak){
+
+				ZdResult zdResultbak = (ZdResult)links.get(1).getAttrMap().get("ZdResultInfo");
+				Map<String, LinkedList<ZdResultSingle>> zdmapbak =  zdResultbak.getZdmap();
+				Collection<LinkedList<ZdResultSingle>> allzdbak =  zdmapbak.values();
+				for (LinkedList<ZdResultSingle> linkedList : allzdbak) {
+					for (int k = 0; k < linkedList.size(); k++) {
+						ZdResultSingle zdResultSingle = linkedList.get(k);
+
+						RouteCalculationResultRoute route = new RouteCalculationResultRoute(); 
+						route.setAendmeobjectid( zdResultSingle.getAendmeid() );
+						route.setAendptpobjectid( zdResultSingle.getAendptpid() );
+						route.setAtimeSlots(zdResultSingle.getAendctp());
+						route.setZendmeobjectid(zdResultSingle.getZendmeid());
+						route.setZendptpobjectid(zdResultSingle.getZendptpid());
+						route.setZtimeSlots(zdResultSingle.getZendctp());
+						
+						bakRoutelist.add(route);
+					}
+				}
+				
+				bakRoute.setZdCount( bakRoute.getZdCount() + zdmapbak.size() );
+				bakRoute.setBusiCount( bakRoute.getBusiCount() + 1 );
+				
+			}
+		}
+		
+		ArrayList<RouteCalculationResult> routeCalculationResultlist = new ArrayList<RouteCalculationResult>();
+		routeCalculationResultlist.add(mainRoute);
+		routeCalculationResultlist.add(bakRoute);
+	    
+		//对资源信息进行排序
+		Collections.sort(routeCalculationResultlist, new RouteJumpedComparator());
 		
 		RouteCalculationOutput ways = new RouteCalculationOutput();
 	    ways.setRoutePlanobjectid( UuidUtil.randomUUID());

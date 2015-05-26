@@ -2,13 +2,9 @@ package com.zznode.opentnms.isearch.otnRouteService.service;
 
 import javax.xml.ws.Endpoint;
 
-import org.eclipse.jetty.security.PropertyUserStore;
 import org.springframework.stereotype.Component;
 
 import com.zznode.opentnms.isearch.otnRouteService.Main;
-import com.zznode.opentnms.isearch.otnRouteService.api.RouteCalculation;
-import com.zznode.opentnms.isearch.otnRouteService.api.webservice.HelloServiceImpl;
-import com.zznode.opentnms.isearch.otnRouteService.util.PropertiesHander;
 
 @Component
 public class JettyService {

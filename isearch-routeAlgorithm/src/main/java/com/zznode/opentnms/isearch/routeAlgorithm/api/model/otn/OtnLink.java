@@ -14,6 +14,7 @@ public class OtnLink extends Link implements Serializable{
 	private OtnNode aendnode ; 
 	private OtnNode zendnode ;
 	
+	
 	// 边的权重
 	public Long getWeight(Policy policy){
 		
@@ -42,7 +43,8 @@ public class OtnLink extends Link implements Serializable{
 		return  null; 
 	}
 	
-	
+
+
 	public Map getAttrMap() {
 		return attrMap;
 	}

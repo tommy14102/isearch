@@ -1,6 +1,8 @@
 package com.zznode.opentnms.isearch.routeAlgorithm.api.model;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 public class CaculatorResultWay {
 
@@ -8,6 +10,15 @@ public class CaculatorResultWay {
 	private Integer routeCount ; 
 	private LinkedList<CaculatorResultWayRoute> routs ;
 	
+	private Map attrMap = new HashMap();
+	
+	
+	public Map getAttrMap() {
+		return attrMap;
+	}
+	public void setAttrMap(Map attrMap) {
+		this.attrMap = attrMap;
+	}
 	public Integer getWayseq() {
 		return Wayseq;
 	}

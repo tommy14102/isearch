@@ -12,7 +12,29 @@ public class CaculatorParam {
 	private Integer count ;
 	private Integer routeCount;
 	
+	private String aendme ; 
+	private String zendme ;
+	private Integer rate ;
 	
+	
+	public Integer getRate() {
+		return rate;
+	}
+	public void setRate(Integer rate) {
+		this.rate = rate;
+	}
+	public String getAendme() {
+		return aendme;
+	}
+	public void setAendme(String aendme) {
+		this.aendme = aendme;
+	}
+	public String getZendme() {
+		return zendme;
+	}
+	public void setZendme(String zendme) {
+		this.zendme = zendme;
+	}
 	public Integer getRouteCount() {
 		return routeCount;
 	}

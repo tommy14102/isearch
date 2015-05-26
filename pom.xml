@@ -33,6 +33,7 @@
   </dependencies>
   <modules>
   	<module>isearch-otn</module>
+  	<module>isearch-otn-model</module>
   	<module>isearch-routeAlgorithm</module>
   </modules>
 </project>

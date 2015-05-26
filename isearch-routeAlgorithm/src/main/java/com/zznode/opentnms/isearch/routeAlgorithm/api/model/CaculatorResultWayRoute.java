@@ -1,7 +1,9 @@
 package com.zznode.opentnms.isearch.routeAlgorithm.api.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CaculatorResultWayRoute {
 
@@ -9,8 +11,15 @@ public class CaculatorResultWayRoute {
 	private String nodeid ; 
 	private List<String> lefteageid = new ArrayList<String>(); 
 	private List<String> righteageid = new ArrayList<String>(); 
+	private Map attrMap = new HashMap();
 	
 	
+	public Map getAttrMap() {
+		return attrMap;
+	}
+	public void setAttrMap(Map attrMap) {
+		this.attrMap = attrMap;
+	}
 	public Integer getRouteseq() {
 		return routeseq;
 	}

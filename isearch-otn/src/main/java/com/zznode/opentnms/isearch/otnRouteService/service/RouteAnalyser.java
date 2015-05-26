@@ -1,9 +1,11 @@
 package com.zznode.opentnms.isearch.otnRouteService.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -11,10 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.zznode.opentnms.isearch.otnRouteService.Main;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.EmsGraph;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.TsnGraph;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.Zhandian;
+import com.zznode.opentnms.isearch.model.bo.EmsGraph;
+import com.zznode.opentnms.isearch.model.bo.TsnGraph;
+import com.zznode.opentnms.isearch.model.bo.ZdResult;
+import com.zznode.opentnms.isearch.model.bo.Zhandian;
+import com.zznode.opentnms.isearch.otnRouteService.cache.CachedClient;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbEms;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbTsn;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.TsnMe;
@@ -39,10 +42,20 @@ public class RouteAnalyser {
 	@Autowired
 	public SubnetManager subnetManager;
 	
+	@Autowired
+	public BusiAnalyser busiAnalyser ;
+	
+	@Autowired
+	public CachedClient cachedClient;
+	
+	
+	private final String memcacTag =  PropertiesHander.getProperty("memcacTag");
+	
+	
 	protected List<TsnGraph> tsnGlist = new ArrayList<TsnGraph>();
 	protected EmsGraph emsGraph = new EmsGraph();
 	
-	public void analyseAllRoute(){
+	public void analyseAllRoute() throws Exception{
 		
 		//1、查询所有ems
 		List<DbEms> allems = resourceManager.getAllEms();
@@ -122,8 +135,9 @@ public class RouteAnalyser {
 	 * 组装图的链路信息。
 	 * 边：OtnLink
 	 * 点：OtnNode
+	 * @throws Exception 
 	 */
-	private void saveAnalyseEmsData(){
+	private void saveAnalyseEmsData() throws Exception{
 		List<OtnLink> linklist  = new ArrayList<OtnLink>();
 		for (Iterator<TsnGraph> iter = tsnGlist.iterator(); iter.hasNext();) {
 			TsnGraph tsnGraph = iter.next();
@@ -143,12 +157,26 @@ public class RouteAnalyser {
 					znode.setId(zend);
 					znode.setTsnids(emsGraph.getZdmap().get(zend).getTsnids());
 					
-					OtnLink otnLink = new OtnLink();
-					otnLink.setAendnode(anode);
-					otnLink.setZendnode(znode);
-					otnLink.setDirection(Direction.DOUBLE);
+					List<ZdResult> resultlist = busiAnalyser.analyseOtnResource(anode.getId(), znode.getId());
+					for (int k = 0; k < resultlist.size(); k++) {
+						ZdResult zdResult = resultlist.get(k);
+						OtnLink otnLink = new OtnLink();
+						otnLink.setAendnode(anode);
+						otnLink.setZendnode(znode);
+						if( zdResult.getDirection().intValue() == 0 ){
+							otnLink.setDirection(Direction.SINGLE);
+						}else{
+							otnLink.setDirection(Direction.DOUBLE);
+						}
+						otnLink.setJump( (long)zdResult.getZdmap().size() );
+						Map attrMap = new HashMap();
+						attrMap.put("ZdResultInfo", zdResult);
+						otnLink.setAttrMap(attrMap);
+						linklist.add(otnLink);
+					}
 					
-					linklist.add(otnLink);
+					//String key = anode.getId() + "|" + znode.getId() ;
+					//cachedClient.set( memcacTag +key, 0, resultlist );
 				}
 			}
 		}

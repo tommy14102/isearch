@@ -1,42 +1,37 @@
 package com.zznode.opentnms.isearch.otnRouteService.service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.jetty.util.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
+import com.zznode.opentnms.isearch.model.bo.DSR;
+import com.zznode.opentnms.isearch.model.bo.OCH;
+import com.zznode.opentnms.isearch.model.bo.ODU;
+import com.zznode.opentnms.isearch.model.bo.ODU0;
+import com.zznode.opentnms.isearch.model.bo.ODU1;
+import com.zznode.opentnms.isearch.model.bo.ODU2;
+import com.zznode.opentnms.isearch.model.bo.ODU3;
+import com.zznode.opentnms.isearch.model.bo.ODU4;
+import com.zznode.opentnms.isearch.model.bo.ZdResult;
+import com.zznode.opentnms.isearch.model.bo.ZdResultSingle;
 import com.zznode.opentnms.isearch.otnRouteService.cache.CachedClient;
-import com.zznode.opentnms.isearch.otnRouteService.consts.ConstBusiness;
 import com.zznode.opentnms.isearch.otnRouteService.consts.enums.Rate;
 import com.zznode.opentnms.isearch.otnRouteService.db.DBUtil;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.DSR;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.OCH;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ODU;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ODU0;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ODU1;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ODU2;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ODU3;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ODU4;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ZdResult;
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ZdResultSingle;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbWdmSnc;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.WdmSncRoute;
 import com.zznode.opentnms.isearch.otnRouteService.manage.ResourceManager;
 import com.zznode.opentnms.isearch.otnRouteService.util.PropertiesHander;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.BusinessAvator;
-import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Section;
-import com.zznode.opentnms.isearch.routeAlgorithm.core.matrix.Matrix;
 
 @Component
 public class BusiAnalyser {
@@ -129,7 +124,7 @@ public class BusiAnalyser {
 	 * @return
 	 * @throws Exception
 	 */
-	private List<ZdResult> analyseOtnResource(String aendZDid, String zendZDid) throws Exception {
+	public List<ZdResult> analyseOtnResource(String aendZDid, String zendZDid) throws Exception {
 		
 		logger.info("start Analyser::" + aendZDid +" ---" + zendZDid);
 		//1.查询两个站点之间的正向单向波道。
@@ -513,6 +508,7 @@ public class BusiAnalyser {
 	    	zdResult.setSncid(wdmsnc.getObjectId());
 	    	zdResult.setSncname( wdmsnc.getSncName() );
 	    	zdResult.setOdu( wdmsnc.getOdu());
+	    	zdResult.setDirection(wdmsnc.getDirection());
 	    	
 	    	Map<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
 	    	

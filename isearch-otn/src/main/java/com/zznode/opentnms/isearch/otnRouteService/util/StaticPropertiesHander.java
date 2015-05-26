@@ -3,9 +3,6 @@ package com.zznode.opentnms.isearch.otnRouteService.util;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
-
-import com.zznode.opentnms.isearch.otnRouteService.consts.ConstBusiness;
 
 public class StaticPropertiesHander {
 

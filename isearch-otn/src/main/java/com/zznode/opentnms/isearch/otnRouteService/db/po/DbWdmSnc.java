@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.zznode.opentnms.isearch.otnRouteService.db.bo.ODU;
+import com.zznode.opentnms.isearch.model.bo.ODU;
 
 public class DbWdmSnc implements Serializable
 {

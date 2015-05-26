@@ -36,7 +36,7 @@ public class Main {
 		
 		//2.根据配置重新加载所有业务资源
 		if(PropertiesHander.getProperty("needRefreshBusi").equals("true")){
-			busiAnalyser.analyseAllBusi();
+			//busiAnalyser.analyseAllBusi();
 			PropertiesHander.setProperty("needRefreshBusi", "false");
 		}
 		
