@@ -48,17 +48,17 @@ public class RouteAnalyser {
 	@Autowired
 	public CachedClient cachedClient;
 	
-	
 	private final String memcacTag =  PropertiesHander.getProperty("memcacTag");
 	
-	
 	protected List<TsnGraph> tsnGlist = new ArrayList<TsnGraph>();
-	protected EmsGraph emsGraph = new EmsGraph();
 	
 	public void analyseAllRoute() throws Exception{
 		
+		logger.info("网络结构抽象开始");
+		
 		//1、查询所有ems
 		List<DbEms> allems = resourceManager.getAllEms();
+		logger.info("全网ems数量：" + allems.size());
 		
 		//2.循环每个ems，处理站点链接关系
 		analyseEms(allems);
@@ -77,14 +77,18 @@ public class RouteAnalyser {
 	private void analyseEms(List<DbEms> allems){
 		
 		tsnGlist = new ArrayList<TsnGraph>();
-		emsGraph = new EmsGraph();
+		//emsGraph = new EmsGraph();
 		
 		//循环所有ems
 		for (int i = 0; i < allems.size(); i++) {
 			DbEms ems = allems.get(i);
 			
+			logger.info("处理ems：" + ems.getObjectId());
+			
 			//1.查询ems的tsn信息。
 			List<DbTsn> tsnlist = subnetManager.getTsnByEms(ems.getObjectId());
+			
+			logger.info("处理ems,tsn数量：" + tsnlist.size());
 			
 			//2.查询tsn关联的tsnlink信息。
 			for (int j = 0; j < tsnlist.size(); j++) {
@@ -100,30 +104,7 @@ public class RouteAnalyser {
 					if( me.getZhandianid()==null || me.getZhandianid().equals("")){
 						continue ;
 					}
-					
 					tsnGraph.getZdids().add(me.getZhandianid());
-					if( emsGraph.getZdmap().get(me.getZhandianid())!=null ){
-						
-						Zhandian zhandian = emsGraph.getZdmap().get(me.getZhandianid());
-						zhandian.getMeids().add(me.getId());
-						zhandian.getTsnids().add(me.getTsnid());
-						
-					}else{
-						
-						Zhandian zhandian = new Zhandian();
-						zhandian.setZhandianid(me.getZhandianid());
-						
-						Set<String> meids = new HashSet<String>() ;
-						Set<String> tsnids = new HashSet<String>() ;
-						
-						meids.add(me.getId());
-						tsnids.add(me.getTsnid());
-						
-						zhandian.setMeids(meids);
-						zhandian.setTsnids(tsnids);
-						
-						emsGraph.getZdmap().put(me.getZhandianid(), zhandian);
-					}
 				}
 				tsnGlist.add(tsnGraph);
 			}
@@ -138,9 +119,18 @@ public class RouteAnalyser {
 	 * @throws Exception 
 	 */
 	private void saveAnalyseEmsData() throws Exception{
+		
 		List<OtnLink> linklist  = new ArrayList<OtnLink>();
+		
+		logger.info("全网tsn数量：" + tsnGlist.size());
+		Set<String> dealedSet = new HashSet<String>();
+		
 		for (Iterator<TsnGraph> iter = tsnGlist.iterator(); iter.hasNext();) {
 			TsnGraph tsnGraph = iter.next();
+			
+			logger.info("处理tsn ：" + tsnGraph.getTsnid());
+			logger.info("处理tsn,站点数量 ：" + tsnGraph.getZdids().size());
+			
 			String[] zdlist = tsnGraph.getZdids().toArray(new String[]{});
 			int zdcount = zdlist.length;
 			for (int i = 0; i < zdcount; i++) {
@@ -148,15 +138,26 @@ public class RouteAnalyser {
 				String aend = zdlist[i];
 				OtnNode anode = new OtnNode();
 				anode.setId(aend);
-				anode.setTsnids(emsGraph.getZdmap().get(aend).getTsnids());
 				
 				for (int j = i+1; j < zdlist.length; j++) {
 					
 					String zend = zdlist[j];
 					OtnNode znode = new OtnNode();
 					znode.setId(zend);
-					znode.setTsnids(emsGraph.getZdmap().get(zend).getTsnids());
 					
+					if( anode.getId().equals("16020002") && znode.getId().equals("16040002") ){
+						
+					}else if ( anode.getId().equals("16040002") && znode.getId().equals("16030001") ){
+						
+					}else{
+						continue ;
+					}
+					
+					String dealedkey = anode.getId() + "|" + znode.getId() ; 
+					if( dealedSet.contains( dealedkey )){
+						continue ;
+					}
+					dealedSet.add( dealedkey );
 					List<ZdResult> resultlist = busiAnalyser.analyseOtnResource(anode.getId(), znode.getId());
 					for (int k = 0; k < resultlist.size(); k++) {
 						ZdResult zdResult = resultlist.get(k);
@@ -175,8 +176,9 @@ public class RouteAnalyser {
 						linklist.add(otnLink);
 					}
 					
-					//String key = anode.getId() + "|" + znode.getId() ;
-					//cachedClient.set( memcacTag +key, 0, resultlist );
+					String key = anode.getId() + "|" + znode.getId() ;
+					cachedClient.set( memcacTag +key, 0, resultlist );
+					
 				}
 			}
 		}

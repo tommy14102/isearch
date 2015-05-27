@@ -32,6 +32,11 @@ public abstract class AlgorithmProcessor {
 		 
 		 Matrix matrix = (Matrix)testobj.get(businessAvatorKey);
 		 
+		 if( matrix ==null ){
+			 log.error("memcached中未查询到资源信息");
+			 return null;
+		 }
+		 
 		 this.policy = param.getPolicy();
 	     this.matrixholder = matrix ; 
 	     this.matrix = matrix.getMatrix();

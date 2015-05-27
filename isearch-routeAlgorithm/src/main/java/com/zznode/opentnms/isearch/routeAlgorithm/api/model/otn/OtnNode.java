@@ -18,6 +18,7 @@ public class OtnNode extends Node implements Serializable{
 	private static final long serialVersionUID = -3120075992921834138L;
 
 	
+	/**
 	private Set<String> tsnids = new HashSet<String>();
 
 
@@ -28,6 +29,7 @@ public class OtnNode extends Node implements Serializable{
 	public void setTsnids(Set<String> tsnids) {
 		this.tsnids = tsnids;
 	}
+	*/
 
 	@Override
 	public String toString() {

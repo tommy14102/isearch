@@ -213,13 +213,14 @@ public class RouteCalculation {
 			ZdResult zdResult =  zditerator.next();
 			
 			int inputrateOrder = ConstBusiness.rateMap.get(rate).intValue();
+			System.out.println(zdResult.getRate());
 			int rateOrder = ConstBusiness.rateMap.get(Integer.valueOf(zdResult.getRate())).intValue();
 			
 			if( rateOrder < inputrateOrder ){
 				zditerator.remove();
 				continue;
 			}
-			if(!zdResult.getODUinfo(rate).equals("")){
+			if( zdResult.getODUinfo(rate).equals("")){
 				zditerator.remove();
 				continue;
 			}
@@ -388,6 +389,9 @@ public class RouteCalculation {
 		for (int j = 0; j < routelist.size(); j++) {
 			CaculatorResultWayRoute caculatorResultWayRoute = routelist.get(j);
 			Section section = (Section)caculatorResultWayRoute.getAttrMap().get("section");
+			if( section==null ){
+				continue ;
+			}
 			
 			List<Link> links = section.getLinklist();
 			Collections.sort(links, new Comparator<Link>() {

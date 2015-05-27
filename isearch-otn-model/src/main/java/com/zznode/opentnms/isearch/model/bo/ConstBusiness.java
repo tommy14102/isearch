@@ -52,6 +52,15 @@ public class ConstBusiness {
 		rateMap.put(115, 3);
 		rateMap.put(8043, 4);//100G
 		
+		rateMap.put(8031, 0);//odu0
+		rateMap.put(104, 1);//odu1
+		rateMap.put(107, 1);//odu1
+		rateMap.put(105, 2);//odu2
+		rateMap.put(108, 2);//odu2
+		rateMap.put(106, 3);//odu3
+		rateMap.put(109, 3);//odu3
+		rateMap.put(8041, 4);//odu4
+		
 		rateDescMap.put(50, "GE");
 		rateDescMap.put(65, "GE");
 		rateDescMap.put(73, "155M");
