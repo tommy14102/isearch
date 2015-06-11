@@ -11,6 +11,7 @@ public class OtnLink extends Link implements Serializable{
 
 	private static final long serialVersionUID = 3732620052975132971L;
 	
+	
 	private OtnNode aendnode ; 
 	private OtnNode zendnode ;
 	
@@ -44,13 +45,8 @@ public class OtnLink extends Link implements Serializable{
 	}
 	
 
-
-	public Map getAttrMap() {
-		return attrMap;
-	}
-	public void setAttrMap(Map attrMap) {
-		this.attrMap = attrMap;
-	}
+	
+	
 	public String getId() {
 		return id;
 	}

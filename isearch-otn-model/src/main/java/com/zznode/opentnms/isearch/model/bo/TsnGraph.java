@@ -4,9 +4,18 @@ import java.util.HashSet;
 
 public class TsnGraph {
 	
+	private String emsid ;
 	private String tsnid ;
 	private HashSet<String> zdids = new HashSet<String>();
 
+
+	public String getEmsid() {
+		return emsid;
+	}
+
+	public void setEmsid(String emsid) {
+		this.emsid = emsid;
+	}
 
 	public String getTsnid() {
 		return tsnid;

@@ -24,6 +24,7 @@ public class PropertiesHander {
             // 文件自动重加载延时设置为30秒，只有当文件修改之后才会重新加载（根据文件最后修改时间判断）  
             strategy.setRefreshDelay(30000);  
             configuration.setReloadingStrategy(strategy);  
+            configuration.isAutoSave();
         }  
         return configuration;  
     }  
@@ -36,8 +37,9 @@ public class PropertiesHander {
         return getIntance().getString(propertyName);  
     }  
     
-    public static void setProperty(String propertyName,String value) {  
+    public static void setProperty(String propertyName,String value) throws ConfigurationException {  
         getIntance().setProperty(propertyName, value);
+        configuration.save();
     }  
 
 }

@@ -1,5 +1,8 @@
 package com.zznode.opentnms.isearch.routeAlgorithm.api.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.zznode.opentnms.isearch.routeAlgorithm.api.enumrate.Policy;
 
 
@@ -15,8 +18,15 @@ public class CaculatorParam {
 	private String aendme ; 
 	private String zendme ;
 	private Integer rate ;
+	protected Map attrMap = new HashMap();
 	
 	
+	public Map getAttrMap() {
+		return attrMap;
+	}
+	public void setAttrMap(Map attrMap) {
+		this.attrMap = attrMap;
+	}
 	public Integer getRate() {
 		return rate;
 	}

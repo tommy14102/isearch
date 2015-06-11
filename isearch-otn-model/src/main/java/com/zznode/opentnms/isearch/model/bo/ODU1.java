@@ -3,11 +3,14 @@ package com.zznode.opentnms.isearch.model.bo;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ODU1 extends ODU{
 
 	private static final long serialVersionUID = 91213596044459451L;
 
-	
+	private static final Logger logger = LoggerFactory.getLogger(ODU1.class);   
 	private List<ODU0> odu0list = new ArrayList<ODU0>() ;
 	
 	private List<DSR> dsrlist = new ArrayList<DSR>() ;
@@ -49,14 +52,18 @@ public class ODU1 extends ODU{
 					odu0_2 = null ;
 				}
 				else{
-					throw new RuntimeException("计算空闲odu资源异常");
+					//直接占满
+					logger.error("ODU1, filling max by rate:" + this.getSncobjectid() + ", innnersnc:" + dsr.getSncobjectid());
+					//throw new RuntimeException("计算空闲odu资源异常 ");
+					odu0_1 = null ;
+					odu0_2 = null ;
 				}
 			}
 			if( odu0_1==null && odu0_2 ==null){
 				return "";
 			} 
 			
-			String freeodu0Str = odu0_1==null?"":",1" +  odu0_2 ==null?"":",2";
+			String freeodu0Str = (odu0_1==null?"":",1" ) +  (odu0_2 ==null?"":",2");
 			String rtnStr = "odu1="+index+ "/odu0=" + freeodu0Str.substring(1);
 			
 			return rtnStr;

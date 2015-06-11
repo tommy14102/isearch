@@ -17,8 +17,7 @@ public class Link implements Serializable{
 	protected Direction direction ;
 	protected Node aendnode;
 	protected Node zendnode;
-	
-	protected Map attrMap;
+	private int linkindex ; 
 	
 	// 边的权重
 	public Long getWeight(Policy policy){
@@ -48,12 +47,11 @@ public class Link implements Serializable{
 		return  null; 
 	}
 	
-	
-	public Map getAttrMap() {
-		return attrMap;
+	public int getLinkindex() {
+		return linkindex;
 	}
-	public void setAttrMap(Map attrMap) {
-		this.attrMap = attrMap;
+	public void setLinkindex(int linkindex) {
+		this.linkindex = linkindex;
 	}
 	public String getId() {
 		return id;

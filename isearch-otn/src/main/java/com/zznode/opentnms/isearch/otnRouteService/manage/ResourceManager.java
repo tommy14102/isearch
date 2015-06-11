@@ -1,19 +1,28 @@
 package com.zznode.opentnms.isearch.otnRouteService.manage;
 
+import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.zznode.opentnms.isearch.otnRouteService.db.DBUtil;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbEmsMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbMeMapper;
+import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbWdmSncAllExtractor;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbWdmSncMapper;
+import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbWdmSncZdExtractor;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.WdmSncRouteMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbEms;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbMe;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbWdmSnc;
+import com.zznode.opentnms.isearch.otnRouteService.db.po.DbWdmSncAll;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.WdmSncRoute;
+import com.zznode.opentnms.isearch.otnRouteService.service.BusiAnalyser;
 import com.zznode.opentnms.isearch.otnRouteService.util.PropertiesHander;
 
 @Component
@@ -22,7 +31,9 @@ public class ResourceManager {
 	@Autowired
 	public DBUtil dbUtil;
 	
-	public List<DbEms> getAllEms(){
+	private static final Logger logger = LoggerFactory.getLogger(ResourceManager.class);   
+	
+	public List<DbEms> getAllEms() throws SQLException{
 		
 		//1.查询ems的tsn信息。
 		StringBuilder sb = new StringBuilder();
@@ -31,7 +42,7 @@ public class ResourceManager {
 			sb.append(" and emsid = '").append("Huawei/NanJingJWZ2").append("' ");
 		}
 		List<DbEms> emslist = dbUtil.query(sb.toString(), new DbEmsMapper());
-				
+		
 		return emslist;
 				
 	}
@@ -41,9 +52,12 @@ public class ResourceManager {
 		//1.查询ems的tsn信息。
 		StringBuilder sb = new StringBuilder();
 		sb.append("SELECT * FROM me WHERE 1=1 and objectid = '").append(meobjectid).append("' ");
-		DbMe me = dbUtil.getJdbcTemplate().queryForObject(sb.toString(), new DbMeMapper());
-				
-		return me;
+		//DbMe me = dbUtil.getJdbcTemplate().queryForObject(sb.toString(), new DbMeMapper());
+		List<DbMe> melist = dbUtil.query(sb.toString(), new DbMeMapper());
+		if( melist.size()==0 ){
+			return null;
+		}
+		return melist.get(0);
 				
 	}
 	
@@ -98,10 +112,51 @@ public class ResourceManager {
 		sb2.append("zendmeobjectid,zendptpobjectid ");
 		sb2.append("FROM wdmsncroute WHERE 1=1 and sncobjectid = '").append( sncid ).append("' ");
 		sb2.append("and protectionrole='0' and direction='").append(direction).append("' ");
+		
+		logger.info("查询数据库路由开始：sncobjectid =" + sncid);
 		List<WdmSncRoute> wdmsncroutelist = dbUtil.getJdbcTemplate().query(sb2.toString(), new WdmSncRouteMapper());
   	
 		return wdmsncroutelist ; 
   	
+	}
+
+	public Collection<DbWdmSncAll> getWdmSncAll(String emsid) {
+
+		
+		StringBuilder sb = new StringBuilder();
+	  	sb.append(" SELECT ");
+	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.aendmeobjectid) ajuzhan, ");
+	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.zendmeobjectid) zjuzhan, ");
+	  	sb.append(" wdmsnc.objectid sncobjectid, ");
+	  	sb.append(" wdmsnc.direction sncdirection, ");
+	  	sb.append(" wdmsnc.sncname sncname, ");
+	  	sb.append(" wdmsnc.rate sncrate, ");
+	  	sb.append("(select model from card , ptp where card.objectid = ptp.cardobjectid and ptp.objectid= wdmsncroute.aendptpobjectid  ) acardmodel, ");
+	  	sb.append("(select model from card , ptp where card.objectid = ptp.cardobjectid and ptp.objectid= wdmsncroute.zendptpobjectid  ) zcardmodel, ");
+	  	sb.append(" wdmsncroute.* ");
+	  	sb.append(" FROM wdmsnc,wdmsncroute WHERE wdmsnc.objectid = wdmsncroute.sncobjectid  ");
+	  	sb.append(" and wdmsncroute.protectionrole='0' ");
+	  	sb.append(" and wdmsnc.emsobjectid='").append(emsid).append("' ");
+	  	sb.append(" order by wdmsncroute.sncobjectid , wdmsncroute.direction , wdmsncroute.routeseq, wdmsncroute.wayseq ");
+	  	
+	  	logger.info("查询数据库路由开始：" + sb.toString());
+	  	return dbUtil.getJdbcTemplate().query(sb.toString(), new DbWdmSncAllExtractor());
+		
+	}
+
+	public Map<String, List<DbWdmSncAll>> getZdWmdsnc(String emsid) {
+		
+		StringBuilder sb = new StringBuilder();
+	  	sb.append(" SELECT ");
+	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.aendmeobjectid) ajuzhan, ");
+	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.zendmeobjectid) zjuzhan, ");
+	  	sb.append(" wdmsnc.* ");
+	  	sb.append(" FROM wdmsnc ");
+	  	sb.append(" where wdmsnc.emsobjectid='").append(emsid).append("' ");
+	  	
+	  	logger.info("getZdWmdsnc查询数据库路由开始：" + sb.toString());
+	  	return dbUtil.getJdbcTemplate().query(sb.toString(), new DbWdmSncZdExtractor());
+		
 	}
 	
 

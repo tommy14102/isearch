@@ -46,6 +46,7 @@ public abstract class DataProcessor<T extends Link> {
 	     log.info( "组装邻接矩阵完成:" + matrix.show() );
 	        
 	     cacheClient.set(businessAvatorKey , 0, matrix);
+	     log.error("存贮邻接矩阵数据完成"  );
 	 }
 	 
 	 protected  abstract  List<T> argnizeData() ;

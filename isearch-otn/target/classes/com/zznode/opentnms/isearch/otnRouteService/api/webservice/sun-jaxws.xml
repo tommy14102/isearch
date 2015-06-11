@@ -1,1 +1,0 @@
-<endpoint name="OtnRouteService" implementation="com.zznode.opentnms.isearch.otnRouteService.api.webservice.OtnRouteServiceImpl" url-pattern="/OtnRouteService" />  

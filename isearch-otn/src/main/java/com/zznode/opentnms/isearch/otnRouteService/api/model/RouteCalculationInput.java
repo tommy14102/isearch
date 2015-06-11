@@ -30,7 +30,7 @@ public class RouteCalculationInput {
 		if( StringUtils.isEmpty(zendzd) && StringUtils.isEmpty(zendme) ){
 			return "missing zend info.";
 		}
-		if(rate==null){
+		if(rate==null||rate.intValue()==0){
 			return "missing rate info.";
 		}
 		return "";

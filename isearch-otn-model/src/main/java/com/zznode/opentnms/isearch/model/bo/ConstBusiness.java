@@ -54,12 +54,15 @@ public class ConstBusiness {
 		
 		rateMap.put(8031, 0);//odu0
 		rateMap.put(104, 1);//odu1
-		rateMap.put(107, 1);//odu1
+		rateMap.put(107, 1);//otu1
 		rateMap.put(105, 2);//odu2
-		rateMap.put(108, 2);//odu2
+		rateMap.put(108, 2);//otu2
 		rateMap.put(106, 3);//odu3
-		rateMap.put(109, 3);//odu3
+		rateMap.put(109, 3);//otu3
 		rateMap.put(8041, 4);//odu4
+		rateMap.put(8042, 4);//otu4
+		
+		rateMap.put(40, 5);//odu4
 		
 		rateDescMap.put(50, "GE");
 		rateDescMap.put(65, "GE");
@@ -91,6 +94,7 @@ public class ConstBusiness {
 		odu3rateList.add(106); // LR_OCH_Data_Unit_3
 		odu3rateList.add(109); // LR_OCH_Data_Unit_3
 		odu4rateList.add(8041); 
+		odu4rateList.add(8042); 
 		ochrateList.add(40); 
 		
 		/**
@@ -133,7 +137,7 @@ public class ConstBusiness {
 		}
 		p = Pattern.compile(".*/odu0=(\\d*)", Pattern.CASE_INSENSITIVE);
 		m = p.matcher(ctp);
-		if( m.matches()  ){
+		if( m.matches() ){
 			ODU0 odu0 = new ODU0();
 			odu0.setIndex(Integer.valueOf(m.group(1)));
 			return odu0 ; 

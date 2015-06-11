@@ -21,7 +21,7 @@
     	<property name="ignoreUnresolvablePlaceholders" value="true" />	
     	<property name="locations">
 			<list>
-				<value>classpath:jdbc.properties</value>
+				<value>classpath:ors-jdbc.properties</value>
 			</list>
 		</property>   
 	</bean>  

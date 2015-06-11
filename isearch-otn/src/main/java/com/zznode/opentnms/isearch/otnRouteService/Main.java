@@ -27,17 +27,16 @@ public class Main {
 	}
 	
 	public static void start() throws Exception{
-		
 		//1.根据配置重新加载所有topo资源
 		if(PropertiesHander.getProperty("needRefreshTopo").equals("true")){
 			routeAnalyser.analyseAllRoute();
-			PropertiesHander.setProperty("needRefresh", "false");
+			//PropertiesHander.setProperty("needRefreshTopo", "false");
 		}
 		
 		//2.根据配置重新加载所有业务资源
 		if(PropertiesHander.getProperty("needRefreshBusi").equals("true")){
 			//busiAnalyser.analyseAllBusi();
-			PropertiesHander.setProperty("needRefreshBusi", "false");
+			//PropertiesHander.setProperty("needRefreshBusi", "false");
 		}
 		
 		//3.开放webservice服务
@@ -48,7 +47,7 @@ public class Main {
 	public static void main(String[] args) {
 		
 		try {
-			logger.info("启动加载程序");
+			logger.info("启动程序");
 			Main.start();
 		} catch (Exception e) {
 			logger.error("启动异常", e);

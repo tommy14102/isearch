@@ -1,10 +1,8 @@
+com.zznode.opentnms.isearch.otnRouteService.api.impl
 com.zznode.opentnms.isearch.otnRouteService.api.model
 com.zznode.opentnms.isearch.otnRouteService.api
-com.zznode.opentnms.isearch.otnRouteService.api.webservice
 com.zznode.opentnms.isearch.otnRouteService.cache
-com.zznode.opentnms.isearch.otnRouteService.consts
 com.zznode.opentnms.isearch.otnRouteService.consts.enums
-com.zznode.opentnms.isearch.otnRouteService.db.bo
 com.zznode.opentnms.isearch.otnRouteService.db
 com.zznode.opentnms.isearch.otnRouteService.db.mapper
 com.zznode.opentnms.isearch.otnRouteService.db.po

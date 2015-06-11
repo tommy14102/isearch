@@ -25,10 +25,6 @@ public class WdmSncRouteMapper implements RowMapper<WdmSncRoute> {
 		
 		wdmSncRoute.acardmodel = resultset.getString( "acardmodel");
 	    wdmSncRoute.zcardmodel = resultset.getString( "zcardmodel");
-	    wdmSncRoute.ajuzhan = resultset.getString( "ajuzhan");
-	    wdmSncRoute.zjuzhan = resultset.getString( "zjuzhan");
-	    wdmSncRoute.tsnid = resultset.getString( "tsnid");
-        
 		return wdmSncRoute  ; 
 		
 	}

@@ -5,14 +5,15 @@ import javax.xml.ws.Endpoint;
 import org.springframework.stereotype.Component;
 
 import com.zznode.opentnms.isearch.otnRouteService.Main;
+import com.zznode.opentnms.isearch.otnRouteService.util.PropertiesHander;
 
 @Component
 public class JettyService {
 
 	public void runJetty() {
 		
-		Endpoint.publish( "http://localhost:8088/isearch-otnRouteService/services/RouteCalculation",  Main.factory.getBean("routeCalculation"));   
-		//Endpoint.publish(PropertiesHander.getProperty("webserviceURI"), new RouteCalculation());   
+		//Endpoint.publish( "http://localhost:8088/isearch-otnRouteService/services/RouteCalculation",  Main.factory.getBean("routeCalculation"));   
+		Endpoint.publish(PropertiesHander.getProperty("webserviceURI"), Main.factory.getBean("routeCalculationImpl"));   
 		/**
 	    Server server = new Server();
 	    SelectChannelConnector connector = new SelectChannelConnector();

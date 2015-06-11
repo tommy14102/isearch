@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ODU3 extends ODU{
 
 	private static final long serialVersionUID = -4601735545714568046L;
+	private static final Logger logger = LoggerFactory.getLogger(ODU3.class);   
 
 	private List<DSR> dsrlist = new ArrayList<DSR>() ;
 	
@@ -72,7 +76,10 @@ public class ODU3 extends ODU{
 					Arrays.fill(odu0Array, 0); 
 				}
 				else{
-					throw new RuntimeException("计算空闲odu资源异常");
+					//直接占满
+					logger.error("ODU3, filling max by rate:" + this.getSncobjectid() + ", innnersnc:" + dsr.getSncobjectid());
+					//throw new RuntimeException("计算空闲odu资源异常 ");
+					Arrays.fill(odu0Array, 0); 
 				}
 			}
 			
@@ -138,7 +145,10 @@ public class ODU3 extends ODU{
 					Arrays.fill(odu0Array, 0); 
 				}
 				else{
-					throw new RuntimeException("计算空闲odu资源异常");
+					//直接占满
+					logger.error("ODU3, filling max by rate:" + this.getSncobjectid() + ", innnersnc:" + dsr.getSncobjectid());
+					//throw new RuntimeException("计算空闲odu资源异常 ");
+					Arrays.fill(odu0Array, 0); 
 				}
 			}
 			
@@ -198,7 +208,10 @@ public class ODU3 extends ODU{
 					Arrays.fill(odu0Array, 0); 
 				}
 				else{
-					throw new RuntimeException("计算空闲odu资源异常");
+					//直接占满
+					logger.error("ODU3, filling max by rate:" + this.getSncobjectid() + ", innnersnc:" + dsr.getSncobjectid());
+					//throw new RuntimeException("计算空闲odu资源异常 ");
+					Arrays.fill(odu0Array, 0); 
 				}
 			}
 			

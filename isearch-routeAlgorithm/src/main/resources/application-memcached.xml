@@ -20,7 +20,7 @@
     	<property name="ignoreUnresolvablePlaceholders" value="true" />	
     	<property name="locations">
 			<list>
-				<value>classpath:memcached.properties</value>
+				<value>classpath:ors-memcached.properties</value>
 			</list>
 		</property>   
 	</bean>  

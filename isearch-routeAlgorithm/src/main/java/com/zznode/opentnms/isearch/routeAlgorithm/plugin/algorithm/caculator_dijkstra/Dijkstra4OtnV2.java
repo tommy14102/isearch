@@ -12,19 +12,24 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.springframework.util.StringUtils;
 
 import com.zznode.opentnms.isearch.model.bo.ZdResult;
 import com.zznode.opentnms.isearch.model.bo.ZdResultSingle;
+import com.zznode.opentnms.isearch.routeAlgorithm.App;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorParam;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorResultWay;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorResultWayRoute;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Link;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Section;
 import com.zznode.opentnms.isearch.routeAlgorithm.core.algorithm.AlgorithmProcessor;
+import com.zznode.opentnms.isearch.routeAlgorithm.core.cache.SPtnMemcachedClient;
 
 public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 
 	 private static Logger log = Logger.getLogger(Dijkstra4OtnV2.class);
+	 
+	 private SPtnMemcachedClient cacheClient = (SPtnMemcachedClient)App.factory.getBean("SPtnMemcachedClient");
 	    
 	 	Set<Integer> openSet =new HashSet<Integer>();   // 未处理过的节点
 	    Set<Integer> closedSet =new HashSet<Integer>();  //已经处理过的节点
@@ -35,14 +40,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    
 	    
 	    @Override
-		protected List<CaculatorResultWay> doCaculate(CaculatorParam param ) {
+		protected List<CaculatorResultWay> doCaculate( CaculatorParam param ) {
 	    	
 	    	String aendid = param.getAend();
 	    	String zendid = param.getZend();
 	    	String aendme = param.getAendme();
 	    	String zendme = param.getZendme();
 	    	
-	    	return dijkstra( aendid, zendid, aendme , zendme ,param.getRate());
+	    	return dijkstra( aendid, zendid, aendme , zendme ,param );
 	    	
 		}
 
@@ -61,7 +66,12 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	        return minIndex;  
 	    } 
 	    
-	    private Long getDistance(int aendindex , int zendindex , int headindex , int tailindex , String aendme , String zendme , Integer rate ){
+	    private Long getDistance(int aendindex , int zendindex , int headindex , int tailindex , String aendme , String zendme , CaculatorParam param ){
+	    	
+	    	String aendptp = (String)param.getAttrMap().get("aendptp");
+	    	String aendctp = (String)param.getAttrMap().get("aendctp");
+	    	String zendptp = (String)param.getAttrMap().get("zendptp");
+	    	String zendctp = (String)param.getAttrMap().get("zendctp");
 	    	
 	    	if(aendindex== headindex){
 	    		
@@ -69,7 +79,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		List<Link> linklist = sec.getLinklist();
 	    		for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
 					Link link = iter.next();
-					ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
+					
+					String key = "OTN_RESOURECE_OTNLink" + "|" + link.getLinkindex();
+					ZdResult zdResult = (ZdResult)cacheClient.get(key);
+					
+					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
 					Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
 					
@@ -81,8 +95,20 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 						continue;
 					}
 					
+					//判断是否经过a端口
+					if(	!StringUtils.isEmpty(aendptp) && !firstelement.getFirst().getAendptpid().equals(aendptp)){
+						iter.remove();
+						continue;
+					}
+					
+					//判断是否经过a时隙
+					if(	!StringUtils.isEmpty(aendctp) && !firstelement.getFirst().getAendctp().equals(aendctp)){
+						iter.remove();
+						continue;
+					}
+					
 					//判断是否有可用资源
-					if(zdResult.getODUinfo(rate).equals("")){
+					if(zdResult.getODUinfo(param.getRate()).equals("")){
 						iter.remove();
 						continue ;
 					}
@@ -97,7 +123,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		List<Link> linklist = sec.getLinklist();
 	    		for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
 					Link link = iter.next();
-					ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
+					
+					String key = "OTN_RESOURECE_OTNLink" + "|" + link.getLinkindex();
+					ZdResult zdResult = (ZdResult)cacheClient.get(key);
+					
+					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
 					Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
 					
@@ -113,8 +143,20 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 						continue;
 					}
 					
+					//判断是否经过z端口
+					if(	!StringUtils.isEmpty(zendptp) && !lastelement.getLast().getZendptpid().equals(zendptp)){
+						iter.remove();
+						continue;
+					}
+					
+					//判断是否经过z时隙
+					if(	!StringUtils.isEmpty(zendctp) && !lastelement.getLast().getZendctp().equals(zendctp)){
+						iter.remove();
+						continue;
+					}
+					
 					//判断是否有可用资源
-					if(zdResult.getODUinfo(rate).equals("")){
+					if(zdResult.getODUinfo(param.getRate()).equals("")){
 						iter.remove();
 						continue ;
 					}
@@ -129,9 +171,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		List<Link> linklist = sec.getLinklist();
 	    		for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
 					Link link = iter.next();
-					ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
+					String key = "OTN_RESOURECE_OTNLink" + "|" + link.getLinkindex();
+					ZdResult zdResult = (ZdResult)cacheClient.get(key);
+					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					//判断是否有可用资源
-					if(zdResult.getODUinfo(rate).equals("")){
+					if(zdResult.getODUinfo(param.getRate()).equals("")){
 						iter.remove();
 						continue ;
 					}
@@ -144,7 +188,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	return matrix[aendindex][zendindex].getMinWeightLink(policy);
 	    }
 	    
-		private List<CaculatorResultWay> dijkstra(String aendid, String zendid, String aendme , String zendme, Integer rate) {
+		private List<CaculatorResultWay> dijkstra(String aendid, String zendid, String aendme , String zendme, CaculatorParam param) {
 			   
 			//起始点的序号
 			Integer startindex = (Integer)pointMap.get(aendid);
@@ -159,7 +203,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	        		distanceMap.put(i, unreachable);  
 	        	}
 	        	else{
-	        		distanceMap.put(i,  getDistance(startindex, i, startindex, zendindex, aendme, zendme, rate) );  
+	        		distanceMap.put(i,  getDistance(startindex, i, startindex, zendindex, aendme, zendme, param) );  
 	        		List<Integer> pathset = new ArrayList<Integer>();
 	        		pathset.add(startindex);
 	        		pathset.add(i);
@@ -184,7 +228,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	            for (Integer openNodeindex : openSet) {
 					if( matrix[currentMinIndex][openNodeindex]!=null  ){
 						
-						long nowdistance = getDistance(currentMinIndex, openNodeindex, startindex, zendindex, aendme, zendme, rate);
+						long nowdistance = getDistance(currentMinIndex, openNodeindex, startindex, zendindex, aendme, zendme, param);
 								
 						if( distanceMap.get(openNodeindex) == unreachable ){
 							distanceMap.put(openNodeindex,  nowdistance + distanceMap.get(currentMinIndex)); 

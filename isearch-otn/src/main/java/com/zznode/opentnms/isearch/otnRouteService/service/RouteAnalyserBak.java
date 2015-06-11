@@ -176,7 +176,7 @@ public class RouteAnalyserBak {
 						otnLink.setJump( (long)zdResult.getZdmap().size() );
 						Map attrMap = new HashMap();
 						attrMap.put("ZdResultInfo", zdResult);
-						otnLink.setAttrMap(attrMap);
+						//otnLink.setAttrMap(attrMap);
 						linklist.add(otnLink);
 					}
 					
