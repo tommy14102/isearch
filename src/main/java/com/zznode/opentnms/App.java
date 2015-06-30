@@ -1,15 +1,18 @@
 package com.zznode.opentnms;
 
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.RemoteException;
+import java.util.Iterator;
 
 import javax.xml.namespace.QName;
+import javax.xml.ws.Service;
 
-import org.apache.axis.client.Call;
-import org.apache.axis.client.Service;
-
+import com.zznode.opentnms.isearch.otnRouteService.api.RouteCalculation;
 import com.zznode.opentnms.isearch.otnRouteService.api.RouteCalculationInput;
 import com.zznode.opentnms.isearch.otnRouteService.api.RouteCalculationOutput;
 import com.zznode.opentnms.isearch.otnRouteService.api.RouteCalculationServiceLocator;
+
 
 /**
  * Hello world!
@@ -28,4 +31,5 @@ public class App
     	RouteCalculationOutput s = rl.getRouteCalculationPort().calculate(routeCalculationInput);
     	System.out.println(s);
     }
+    
 }

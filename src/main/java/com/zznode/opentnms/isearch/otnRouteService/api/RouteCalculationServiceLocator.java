@@ -22,7 +22,7 @@ public class RouteCalculationServiceLocator extends org.apache.axis.client.Servi
     }
 
     // Use to get a proxy class for RouteCalculationPort
-    private java.lang.String RouteCalculationPort_address = "http://localhost:8088/isearch-otnRouteService/services/RouteCalculation";
+    private java.lang.String RouteCalculationPort_address = "http://59.46.127.155:8088/isearch-otnRouteService/services/RouteCalculation";
 
     public java.lang.String getRouteCalculationPortAddress() {
         return RouteCalculationPort_address;

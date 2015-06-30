@@ -1,6 +1,10 @@
 package com.zznode.opentnms.isearch.otnRouteService.api.model;
 
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
+
+import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
 
 public class RouteCalculationInput {
 
@@ -9,45 +13,41 @@ public class RouteCalculationInput {
 	private Integer rate;
 	private String equipmentType;
 	private String acity;
+	private String aendstationname;
+	private String aendbuildingname;
 	private String aendme;
 	private String aendport;
 	private String atimeSlots;
 	private String zcity;
+	private String zendstationname;
+	private String zendbuildingname;
 	private String zendme;
 	private String zendport;
 	private String ztimeSlots;
 	private String ProtectionType;
 	private String additionalInfo;
 	
-	private String aendzd;
-	private String zendzd;
+	private List<ClusionBean> inclusionResource;
+	private List<ClusionBean> exclusionResource;
+	
 	
 	
 	public String checkmyself(){
-		if( StringUtils.isEmpty(aendzd) && StringUtils.isEmpty(aendme) ){
+		if( StringUtils.isEmpty(aendstationname) && StringUtils.isEmpty(aendme) ){
 			return "missing aend info.";
 		}
-		if( StringUtils.isEmpty(zendzd) && StringUtils.isEmpty(zendme) ){
+		if( StringUtils.isEmpty(zendstationname) && StringUtils.isEmpty(zendme) ){
 			return "missing zend info.";
 		}
 		if(rate==null||rate.intValue()==0){
 			return "missing rate info.";
 		}
+		if( ConstBusiness.rateMap.get(rate)==null){
+			return "bad rate info.";
+		}
 		return "";
 	}
 	
-	public String getAendzd() {
-		return aendzd;
-	}
-	public void setAendzd(String aendzd) {
-		this.aendzd = aendzd;
-	}
-	public String getZendzd() {
-		return zendzd;
-	}
-	public void setZendzd(String zendzd) {
-		this.zendzd = zendzd;
-	}
 	public String getCircuitname() {
 		return circuitname;
 	}
@@ -131,6 +131,54 @@ public class RouteCalculationInput {
 	}
 	public void setAdditionalInfo(String additionalInfo) {
 		this.additionalInfo = additionalInfo;
+	}
+
+	public String getAendstationname() {
+		return aendstationname;
+	}
+
+	public void setAendstationname(String aendstationname) {
+		this.aendstationname = aendstationname;
+	}
+
+	public String getAendbuildingname() {
+		return aendbuildingname;
+	}
+
+	public void setAendbuildingname(String aendbuildingname) {
+		this.aendbuildingname = aendbuildingname;
+	}
+
+	public String getZendstationname() {
+		return zendstationname;
+	}
+
+	public void setZendstationname(String zendstationname) {
+		this.zendstationname = zendstationname;
+	}
+
+	public String getZendbuildingname() {
+		return zendbuildingname;
+	}
+
+	public void setZendbuildingname(String zendbuildingname) {
+		this.zendbuildingname = zendbuildingname;
+	}
+
+	public List<ClusionBean> getInclusionResource() {
+		return inclusionResource;
+	}
+
+	public void setInclusionResource(List<ClusionBean> inclusionResource) {
+		this.inclusionResource = inclusionResource;
+	}
+
+	public List<ClusionBean> getExclusionResource() {
+		return exclusionResource;
+	}
+
+	public void setExclusionResource(List<ClusionBean> exclusionResource) {
+		this.exclusionResource = exclusionResource;
 	}
 	
 	

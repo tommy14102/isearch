@@ -14,7 +14,6 @@ import com.zznode.opentnms.isearch.otnRouteService.api.model.RouteCalculationInp
 import com.zznode.opentnms.isearch.otnRouteService.api.model.RouteCalculationOutput;
 
 @WebService
-@SOAPBinding(style=Style.RPC)
 @Component
 public interface RouteCalculation {
 

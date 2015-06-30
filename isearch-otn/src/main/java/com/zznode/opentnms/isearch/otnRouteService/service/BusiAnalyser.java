@@ -1136,23 +1136,28 @@ public class BusiAnalyser {
 		
 		logger.info("start Analyser::" + aendZDid +" ---" + zendZDid);
 		
+		List wdmsnclist = new ArrayList<DbWdmSncAll>();
+		
 		//1.查询两个站点之间的正向单向波道。
 		String key = aendZDid + "|" + zendZDid ;
-		List<DbWdmSncAll> wdmsnclist =  emsDataMap.get(key);
-		if(wdmsnclist!=null){
-			logger.info( "正向波道数量:" + wdmsnclist.size() );
-			for (Iterator<DbWdmSncAll> iter = wdmsnclist.iterator(); iter.hasNext();) {
+		List<DbWdmSncAll> wdmsnclistTp =  emsDataMap.get(key);
+		if( wdmsnclistTp!=null){
+			logger.info( "正向波道数量:" + wdmsnclistTp.size() );
+			for (Iterator<DbWdmSncAll> iter = wdmsnclistTp.iterator(); iter.hasNext();) {
 				DbWdmSncAll wdmsnc = iter.next();
+				
+				
 		  		List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"0");
 		    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
 		    		iter.remove() ; 
+		    		logger.info( "正向波道无路由，舍弃:" + wdmsnc.getObjectId() );
 		    		continue ;
 		    	}
+		    	
 		    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
+		    	wdmsnclist.add(wdmsnc);
 		  	}
-		}else{
-			wdmsnclist = new ArrayList<DbWdmSncAll>();
-		}
+		} 
 		
 	  	//2.查询反向波道
 		String keyReverse = zendZDid + "|" + aendZDid ;
@@ -1162,14 +1167,23 @@ public class BusiAnalyser {
 			//查询反向波道的波道路由
 		  	for (Iterator<DbWdmSncAll> iter = sncReverselist.iterator(); iter.hasNext();) {
 		  		DbWdmSncAll wdmsnc = iter.next();
+		  		
 		  		List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"1");
 		    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
 		    		iter.remove() ; 
+		    		logger.info( "反向波道无路由，舍弃:" + wdmsnc.getObjectId() );
 		    		continue ;
 		    	}
 		    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
 		    	wdmsnc.setIsReverse(Boolean.TRUE);
 		    	wdmsnclist.add(wdmsnc);
+		    	
+		    	/**
+		    	if(wdmsnc.getObjectId().equals("UUID:b545d64c-210a-11e4-9365-005056862639")){
+					System.out.println("why1");
+				}
+				*/
+		    	
 		  	}
 		}
 		
@@ -1645,6 +1659,7 @@ public class BusiAnalyser {
 	    wdmsncAllResult.addAll(wdmsncOdu4Result);
 	    wdmsncAllResult.addAll(wdmsncOchResult);
 	  	
+	    logger.info("wdmsncAllResult info::" + wdmsncAllResult.size());
 	    
 	    //14.整合查询结果
 	    List<ZdResult> allrst = new ArrayList<ZdResult>();
@@ -1652,6 +1667,8 @@ public class BusiAnalyser {
 	  		
 	  		DbWdmSncAll wdmsnc = iter.next();
 	  		if( wdmsnc.isReverse ){
+	  			logger.info("isReverse drop::" + wdmsnc.getObjectId());
+	  			wdmsnc.setIsReverse(Boolean.FALSE);
 	  			continue ;
 	  		}
 	  		ZdResult zdResult = new ZdResult();

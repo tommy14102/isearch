@@ -3,6 +3,7 @@ package com.zznode.opentnms.isearch.routeAlgorithm.api.model;
 import java.io.Serializable;
 import java.util.Map;
 
+import com.zznode.opentnms.isearch.model.bo.ZdResult;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.enumrate.Direction;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.enumrate.Policy;
 
@@ -18,6 +19,7 @@ public class Link implements Serializable{
 	protected Node aendnode;
 	protected Node zendnode;
 	private int linkindex ; 
+	private ZdResult zdResult;
 	
 	// 边的权重
 	public Long getWeight(Policy policy){
@@ -47,6 +49,17 @@ public class Link implements Serializable{
 		return  null; 
 	}
 	
+	
+	public ZdResult getZdResult() {
+		return zdResult;
+	}
+
+
+	public void setZdResult(ZdResult zdResult) {
+		this.zdResult = zdResult;
+	}
+
+
 	public int getLinkindex() {
 		return linkindex;
 	}

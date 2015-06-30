@@ -1,6 +1,7 @@
 package com.zznode.opentnms.isearch.routeAlgorithm.api.model;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.zznode.opentnms.isearch.routeAlgorithm.api.enumrate.Policy;
@@ -15,8 +16,8 @@ public class CaculatorParam {
 	private Integer count ;
 	private Integer routeCount;
 	
-	private String aendme ; 
-	private String zendme ;
+	private List<String> aendme ; 
+	private List<String> zendme ;
 	private Integer rate ;
 	protected Map attrMap = new HashMap();
 	
@@ -33,16 +34,16 @@ public class CaculatorParam {
 	public void setRate(Integer rate) {
 		this.rate = rate;
 	}
-	public String getAendme() {
+	public List<String> getAendme() {
 		return aendme;
 	}
-	public void setAendme(String aendme) {
+	public void setAendme(List<String> aendme) {
 		this.aendme = aendme;
 	}
-	public String getZendme() {
+	public List<String> getZendme() {
 		return zendme;
 	}
-	public void setZendme(String zendme) {
+	public void setZendme(List<String> zendme) {
 		this.zendme = zendme;
 	}
 	public Integer getRouteCount() {

@@ -8,17 +8,8 @@ public class CaculatorResultWay {
 
 	private Integer Wayseq ; 
 	private Integer routeCount ; 
-	private LinkedList<CaculatorResultWayRoute> routs ;
+	private LinkedList<CaculatorResultWayRoute>  routs = new LinkedList<CaculatorResultWayRoute>();
 	
-	private Map attrMap = new HashMap();
-	
-	
-	public Map getAttrMap() {
-		return attrMap;
-	}
-	public void setAttrMap(Map attrMap) {
-		this.attrMap = attrMap;
-	}
 	public Integer getWayseq() {
 		return Wayseq;
 	}
@@ -31,7 +22,6 @@ public class CaculatorResultWay {
 	public void setRouteCount(Integer routeCount) {
 		this.routeCount = routeCount;
 	}
-	
 	public LinkedList<CaculatorResultWayRoute> getRouts() {
 		return routs;
 	}
@@ -42,8 +32,7 @@ public class CaculatorResultWay {
 	public String toString() {
 		return "CaculatorResultWay [Wayseq=" + Wayseq + ", routeCount="
 				+ routeCount + ", routs=" + routs + "]";
-	} 
-	
+	}
 	
 
 }

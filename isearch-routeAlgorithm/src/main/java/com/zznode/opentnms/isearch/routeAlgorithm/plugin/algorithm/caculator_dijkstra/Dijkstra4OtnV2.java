@@ -14,6 +14,13 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
+import com.zznode.opentnms.isearch.model.bo.DSR;
+import com.zznode.opentnms.isearch.model.bo.OCH;
+import com.zznode.opentnms.isearch.model.bo.ODU0;
+import com.zznode.opentnms.isearch.model.bo.ODU1;
+import com.zznode.opentnms.isearch.model.bo.ODU2;
+import com.zznode.opentnms.isearch.model.bo.ODU3;
+import com.zznode.opentnms.isearch.model.bo.ODU4;
 import com.zznode.opentnms.isearch.model.bo.ZdResult;
 import com.zznode.opentnms.isearch.model.bo.ZdResultSingle;
 import com.zznode.opentnms.isearch.routeAlgorithm.App;
@@ -22,6 +29,7 @@ import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorResultWay;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.CaculatorResultWayRoute;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Link;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Section;
+import com.zznode.opentnms.isearch.routeAlgorithm.api.model.otn.ExCluseBean;
 import com.zznode.opentnms.isearch.routeAlgorithm.core.algorithm.AlgorithmProcessor;
 import com.zznode.opentnms.isearch.routeAlgorithm.core.cache.SPtnMemcachedClient;
 
@@ -38,14 +46,13 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    HashMap<Integer, Long> distanceMap = new HashMap<Integer, Long>();  
 	    Long unreachable = Long.MAX_VALUE ; 
 	    
-	    
 	    @Override
 		protected List<CaculatorResultWay> doCaculate( CaculatorParam param ) {
 	    	
 	    	String aendid = param.getAend();
 	    	String zendid = param.getZend();
-	    	String aendme = param.getAendme();
-	    	String zendme = param.getZendme();
+	    	List<String> aendme = param.getAendme();
+	    	List<String> zendme = param.getZendme();
 	    	
 	    	return dijkstra( aendid, zendid, aendme , zendme ,param );
 	    	
@@ -66,21 +73,38 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	        return minIndex;  
 	    } 
 	    
-	    private Long getDistance(int aendindex , int zendindex , int headindex , int tailindex , String aendme , String zendme , CaculatorParam param ){
+	    private Long getDistance(int aendindex , int zendindex , int headindex , int tailindex , List<String> aendmelist , List<String> zendmelist , CaculatorParam param ){
+	    	
+	    	log.info( " 计算两点间距离 ，aendindex:"+ aendindex  +" ，zendindex:"+ zendindex );
 	    	
 	    	String aendptp = (String)param.getAttrMap().get("aendptp");
 	    	String aendctp = (String)param.getAttrMap().get("aendctp");
 	    	String zendptp = (String)param.getAttrMap().get("zendptp");
 	    	String zendctp = (String)param.getAttrMap().get("zendctp");
 	    	
+	    	//禁止网元
+	    	List<String> excludeMelist = (List<String>)param.getAttrMap().get("excludeMelist");
+	    	//禁止端口
+	    	List<String> excludePtplist = (List<String>)param.getAttrMap().get("excludePtplist");
+	    	excludeMelist = excludeMelist==null ? new ArrayList<String>() : excludeMelist ; 
+	    	excludePtplist = excludePtplist==null ? new ArrayList<String>() : excludePtplist ; 
+	    	
+	    	//必经点最近原则
+	    	Map<String ,List<ExCluseBean> > clusebeanMap = (Map<String ,List<ExCluseBean> >)param.getAttrMap().get("cluselist");
+	    	
+	    	Section sec = matrix[aendindex][zendindex];
+	    	if(sec==null){
+	    		return null;
+	    	}
+	    	List<Link> linklist = sec.getLinklist();
+	    	log.info( " 计算两点间距离 ，linklist.size:"+ linklist.size() );
+	    	
 	    	if(aendindex== headindex){
 	    		
-	    		Section sec = matrix[aendindex][zendindex];
-	    		List<Link> linklist = sec.getLinklist();
 	    		for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
 					Link link = iter.next();
 					
-					String key = "OTN_RESOURECE_OTNLink" + "|" + link.getLinkindex();
+					String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+ link.getLinkindex();
 					ZdResult zdResult = (ZdResult)cacheClient.get(key);
 					
 					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
@@ -90,41 +114,41 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					//判断是否经过a网元
 					Iterator<LinkedList<ZdResultSingle>>  iters = allzd.iterator();
 					LinkedList<ZdResultSingle> firstelement = iters.next();
-					if(	!firstelement.getFirst().getAendmeid().equals(aendme)){
+					
+					if(	aendmelist.size()>0 && !aendmelist.contains(firstelement.getFirst().getAendmeid())){
 						iter.remove();
+						log.debug( " 计算两点间距离 ，按网元过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
 					//判断是否经过a端口
 					if(	!StringUtils.isEmpty(aendptp) && !firstelement.getFirst().getAendptpid().equals(aendptp)){
 						iter.remove();
+						log.debug( " 计算两点间距离 ，按端口过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
 					//判断是否经过a时隙
 					if(	!StringUtils.isEmpty(aendctp) && !firstelement.getFirst().getAendctp().equals(aendctp)){
 						iter.remove();
+						log.debug( " 计算两点间距离 ，按时隙过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
-					//判断是否有可用资源
-					if(zdResult.getODUinfo(param.getRate()).equals("")){
-						iter.remove();
-						continue ;
-					}
 				}
 	    		if(linklist.size()==0){
+	    			log.info( " 计算两点间距离 ，无结果返回" );
 	    			return null;
 	    		}
 	    		
-	    	}else if(zendindex== tailindex){
+	    	}
+
+	    	if(zendindex== tailindex){
 	    		
-	    		Section sec = matrix[aendindex][zendindex];
-	    		List<Link> linklist = sec.getLinklist();
 	    		for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
 					Link link = iter.next();
 					
-					String key = "OTN_RESOURECE_OTNLink" + "|" + link.getLinkindex();
+					String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+  link.getLinkindex();
 					ZdResult zdResult = (ZdResult)cacheClient.get(key);
 					
 					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
@@ -138,61 +162,175 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 						lastelement = iters.next();
 					}
 					
-					if( !lastelement.getLast().getZendmeid().equals(zendme)){
+					if( zendmelist.size()>0 && !zendmelist.contains(lastelement.getLast().getZendmeid())){
 						iter.remove();
+						log.debug( " 计算两点间距离 ，按z网元过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
 					//判断是否经过z端口
 					if(	!StringUtils.isEmpty(zendptp) && !lastelement.getLast().getZendptpid().equals(zendptp)){
 						iter.remove();
+						log.debug( " 计算两点间距离 ，按z端口过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
 					//判断是否经过z时隙
 					if(	!StringUtils.isEmpty(zendctp) && !lastelement.getLast().getZendctp().equals(zendctp)){
 						iter.remove();
+						log.debug( " 计算两点间距离 ，按z时隙过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
-					//判断是否有可用资源
-					if(zdResult.getODUinfo(param.getRate()).equals("")){
-						iter.remove();
-						continue ;
-					}
 				}
 	    		if(linklist.size()==0){
+	    			log.info( " 计算两点间距离 ，无结果返回" );
 	    			return null;
 	    		}
+	    	}
+	    	
+	    	
+	    	outer:for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
+	    		Link link = iter.next();
+	    		String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+  link.getLinkindex();
+	    		ZdResult zdResult = (ZdResult)cacheClient.get(key);
+	    		//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
+	    		//判断是否有可用资源
+	    		if(zdResult.getODUinfo(param.getRate()).equals("")){
+	    			iter.remove();
+	    			log.debug( " 计算两点间距离 ，按资源过滤:"+ zdResult.getSncid() );
+	    			continue ;
+	    		}
 	    		
-	    	}else{
+	    		if( excludeMelist.size()>0 || excludePtplist.size()>0 ){
+	    			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+	    			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+	    			
+	    			for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+	    				for (int i = 0; i < zdsinglelist.size(); i++) {
+	   					ZdResultSingle zd = zdsinglelist.get(i);
+	   					if( excludeMelist.contains(zd.getAendmeid()) || excludeMelist.contains(zd.getZendmeid()) ){
+	   						iter.remove();
+	   		    			log.info( " 计算两点间距离 ，按禁止网元过滤:"+ zdResult.getSncid() );
+	   		    			continue outer;
+	   					}
+	   					if( excludePtplist.contains(zd.getAendptpid()) || excludePtplist.contains(zd.getZendptpid()) ){
+	   						iter.remove();
+	   		    			log.info( " 计算两点间距离 ，按禁止端口过滤:"+ zdResult.getSncid() );
+	   		    			continue outer;
+	   					}
+	    				}
+	    			}
+	    		}
 	    		
-	    		Section sec = matrix[aendindex][zendindex];
-	    		List<Link> linklist = sec.getLinklist();
-	    		for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
-					Link link = iter.next();
-					String key = "OTN_RESOURECE_OTNLink" + "|" + link.getLinkindex();
-					ZdResult zdResult = (ZdResult)cacheClient.get(key);
-					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
-					//判断是否有可用资源
-					if(zdResult.getODUinfo(param.getRate()).equals("")){
-						iter.remove();
-						continue ;
+	    		//必经点包含在a端站点内
+	    		if( clusebeanMap.containsKey( sec.getAendNode())  ){
+	    			
+	    			Set<String> cmelist = new HashSet<String>();
+	    			Set<String> cptplist = new HashSet<String>();
+	    			
+	    			List<ExCluseBean> beans = clusebeanMap.get(sec.getAendNode());
+	    			for (int i = 0; i < beans.size(); i++) {
+	    				if(!StringUtils.isEmpty(beans.get(i).getPtpid())){
+	    					cptplist.add(beans.get(i).getPtpid());
+	    				}
+	    				else{
+	    					cmelist.add(beans.get(i).getMeid());
+	    				}
 					}
+	    			
+	    			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+	    			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+	    			
+	    			for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+	    				for (int i = 0; i < zdsinglelist.size(); i++) {
+	    					ZdResultSingle zd = zdsinglelist.get(i);
+	    					if( cmelist.contains(zd.getAendmeid())   ){
+	    						cmelist.remove(zd.getAendmeid());
+	    					}
+	    					if( cmelist.contains(zd.getZendmeid())   ){
+	    						cmelist.remove(zd.getZendmeid());
+	    					}
+	    					if( cptplist.contains(zd.getAendptpid())   ){
+	    						cptplist.remove(zd.getAendptpid());
+	    					}
+	    					if( cptplist.contains(zd.getZendptpid())   ){
+	    						cptplist.remove(zd.getZendptpid());
+	    					}
+	    				}
+	    				if(cmelist.size()>0 || cptplist.size()>0){
+	    					iter.remove();
+	    					log.info( " 计算两点间距离 ，按必经点过滤:"+ zdResult.getSncid() );
+	    					continue outer;
+	    				}
+	    			}
 	    		}
-	    		if(linklist.size()==0){
-	    			return null;
+	    		
+	    		//必经点包含在z端站点内
+	    		if( clusebeanMap.containsKey( sec.getZendNode())  ){
+	    			
+	    			Set<String> cmelist = new HashSet<String>();
+	    			Set<String> cptplist = new HashSet<String>();
+	    			
+	    			List<ExCluseBean> beans = clusebeanMap.get(sec.getZendNode());
+	    			for (int i = 0; i < beans.size(); i++) {
+	    				if(!StringUtils.isEmpty(beans.get(i).getPtpid())){
+	    					cptplist.add(beans.get(i).getPtpid());
+	    				}
+	    				else{
+	    					cmelist.add(beans.get(i).getMeid());
+	    				}
+					}
+	    			
+	    			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+	    			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+	    			
+	    			for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+	    				for (int i = 0; i < zdsinglelist.size(); i++) {
+	    					ZdResultSingle zd = zdsinglelist.get(i);
+	    					if( cmelist.contains(zd.getAendmeid())   ){
+	    						cmelist.remove(zd.getAendmeid());
+	    					}
+	    					if( cmelist.contains(zd.getZendmeid())   ){
+	    						cmelist.remove(zd.getZendmeid());
+	    					}
+	    					if( cptplist.contains(zd.getAendptpid())   ){
+	    						cptplist.remove(zd.getAendptpid());
+	    					}
+	    					if( cptplist.contains(zd.getZendptpid())   ){
+	    						cptplist.remove(zd.getZendptpid());
+	    					}
+	    				}
+	    				if(cmelist.size()>0 || cptplist.size()>0){
+	    					iter.remove();
+	    					log.info( " 计算两点间距离 ，按必经点过滤:"+ zdResult.getSncid() );
+	    					continue outer;
+	    				}
+	    			}
 	    		}
+	    	}
+	    		
+	    	if(linklist.size()==0){
+	    		log.info( " 计算两点间距离 ，无结果返回" );
+	    		return null;
+	    	}
+	    	
+	    	//如果包含必经点，那么返回最短距离
+	    	if( clusebeanMap.containsKey( sec.getAendNode()) ||clusebeanMap.containsKey( sec.getZendNode()) ){
+	    		return Long.MAX_VALUE * -1 ; 
 	    	}
 	    	
 	    	return matrix[aendindex][zendindex].getMinWeightLink(policy);
 	    }
 	    
-		private List<CaculatorResultWay> dijkstra(String aendid, String zendid, String aendme , String zendme, CaculatorParam param) {
+		private List<CaculatorResultWay> dijkstra(String aendid, String zendid, List<String> aendme , List<String> zendme, CaculatorParam param) {
 			   
 			//起始点的序号
 			Integer startindex = (Integer)pointMap.get(aendid);
 			Integer zendindex = (Integer)pointMap.get(zendid) ; 
+			
+			log.info("非直达寻路计算请求：" +" aend:"+ aendid +"("+ startindex+")" );
+			log.info("非直达寻路计算请求：" +" zend:"+ zendid +"("+ zendindex+")" );
 			
 			closedSet.add(startindex);
 			
@@ -203,11 +341,18 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	        		distanceMap.put(i, unreachable);  
 	        	}
 	        	else{
-	        		distanceMap.put(i,  getDistance(startindex, i, startindex, zendindex, aendme, zendme, param) );  
-	        		List<Integer> pathset = new ArrayList<Integer>();
-	        		pathset.add(startindex);
-	        		pathset.add(i);
-	        		path.put(i, pathset);
+	        		Long distance = getDistance(startindex, i, startindex, zendindex, aendme, zendme, param);
+	        		if(distance==null){
+	        			distanceMap.put(i, unreachable);  
+	        		}
+	        		else{
+	        			distanceMap.put(i,  distance );  
+		        		List<Integer> pathset = new ArrayList<Integer>();
+		        		pathset.add(startindex);
+		        		pathset.add(i);
+		        		path.put(i, pathset);
+	        		}
+	        		
 	        	}
 	        	
 	        	//所有的节点都缴入到未处理节点中
@@ -216,11 +361,20 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	        	}
 	        } 
 	        
+	        log.info("非直达寻路：" +" aendzd:"+ aendid +"("+ startindex+")" );
+	        for ( Map.Entry<Integer, List<Integer>> cp : path.entrySet() ) {
+	        	log.info("非直达寻路：" +" 可达站点:"+ pointMap.getKey(cp.getKey()) +"("+ cp.getKey()+")" + ",路径：" + cp.getValue() );
+			}
+	        
+	        
 	        while ( closedSet.size() != matrix.length) {  
 	            int currentMinIndex = currentMinIndex();  
 	            if (currentMinIndex == -1 ){
+	            	log.info("非直达寻路：没有找到下一跳路径" );
 	            	break ;
 	            }
+	            log.info("非直达寻路：" +" 下一跳最近点:"+ pointMap.getKey(currentMinIndex) +"("+ currentMinIndex +")" );
+	            
 	            closedSet.add(currentMinIndex);  
 	            openSet.remove(currentMinIndex);
 	            
@@ -228,7 +382,10 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	            for (Integer openNodeindex : openSet) {
 					if( matrix[currentMinIndex][openNodeindex]!=null  ){
 						
-						long nowdistance = getDistance(currentMinIndex, openNodeindex, startindex, zendindex, aendme, zendme, param);
+						Long nowdistance = getDistance(currentMinIndex, openNodeindex, startindex, zendindex, aendme, zendme, param);
+						if( nowdistance ==null ){
+							continue;
+						}
 								
 						if( distanceMap.get(openNodeindex) == unreachable ){
 							distanceMap.put(openNodeindex,  nowdistance + distanceMap.get(currentMinIndex)); 
@@ -236,6 +393,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 							pathset.addAll( path.get(currentMinIndex)) ;
 			        		pathset.add(openNodeindex);
 							path.put(openNodeindex, pathset);
+							log.info("非直达寻路：" +" 更新距离:"+ pointMap.getKey(openNodeindex) +"("+ openNodeindex +")" + ",路径：" + pathset );
 						}
 						
 						if( nowdistance + distanceMap.get(currentMinIndex) < distanceMap.get(openNodeindex)){
@@ -244,6 +402,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 							pathset.addAll( path.get(currentMinIndex)) ;
 			        		pathset.add(openNodeindex);
 							path.put(openNodeindex, pathset);
+							log.info("非直达寻路：" +" 更新距离:"+ pointMap.getKey(openNodeindex) +"("+ openNodeindex +")" + ",路径：" + pathset );
 						}
 					}
 				}
@@ -260,8 +419,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
        	    CaculatorResultWay way = new CaculatorResultWay();
         	way.setWayseq(0);
         	way.setRouteCount(alllist.size());
-        	LinkedList<CaculatorResultWayRoute> routs = new LinkedList<CaculatorResultWayRoute>();
-        	       
+
        	    for (int l = 0; l < alllist.size(); l++) {
        	    	Integer nodeindex = alllist.get(l) ; 
         		CaculatorResultWayRoute route = new CaculatorResultWayRoute();
@@ -269,14 +427,40 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
         		route.setNodeid((String)pointMap.getKey(nodeindex));
         		
         		if( l+1 < alllist.size() ){
+        			
         		   Section nextSectioninfo = matrix[nodeindex][alllist.get(l+1)];
- 				   route.getAttrMap().put("section", nextSectioninfo);
+        		   for (int i = 0; i < nextSectioninfo.getLinklist().size(); i++) {
+        			   Link link = nextSectioninfo.getLinklist().get(i);
+        			   String key = "OTN_RESOURECE_OTNLink" + "|"+nextSectioninfo.getAendNode()+"|"+nextSectioninfo.getZendNode()+"|" + link.getLinkindex();
+        			   ZdResult zdResult = (ZdResult)cacheClient.get( key );
+        			   link.setZdResult(zdResult);
+        			   if(zdResult.getOdu() instanceof DSR){
+        				   route.getClientrouts().add(link);
+        			   }
+        			   else if(zdResult.getOdu() instanceof ODU0){
+        				   route.getClientrouts().add(link);
+        			   }
+        			   else if(zdResult.getOdu() instanceof ODU1){
+        				   route.getClientrouts().add(link);
+        			   }
+        			   else if(zdResult.getOdu() instanceof ODU2){
+        				   route.getClientrouts().add(link);
+        			   }
+        			   else if(zdResult.getOdu() instanceof ODU3){
+        				   route.getClientrouts().add(link);
+        			   }
+        			   else if(zdResult.getOdu() instanceof ODU4){
+        				   route.getClientrouts().add(link);
+        			   }
+        			   else if(zdResult.getOdu() instanceof OCH){
+        				   route.getClientrouts().add(link);
+        			   }
+        		   }
  			   }
         		
-        		routs.add(route);
+        		way.getRouts().add(route);
        	    }
        	    	   
-       	    way.setRouts(routs);
        	    ways.add(way);
 		       
        		return ways ;

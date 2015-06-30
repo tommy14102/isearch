@@ -4,13 +4,12 @@ import java.util.ArrayList;
 
 public class RouteCalculationResult {
 
-	private String freeOdu;
 	private Integer zdCount;
 	private Integer busiCount;
 	
-	private ArrayList<RouteCalculationResultRoute> route ;
+	private ArrayList<RouteCalculationResultRouteWrapper> routeCalculationResultRouteWrapper = new ArrayList<RouteCalculationResultRouteWrapper>() ;
 
-	
+
 	public Integer getZdCount() {
 		return zdCount;
 	}
@@ -27,20 +26,13 @@ public class RouteCalculationResult {
 		this.busiCount = busiCount;
 	}
 
-	public String getFreeOdu() {
-		return freeOdu;
+
+	public ArrayList<RouteCalculationResultRouteWrapper> getRoute() {
+		return routeCalculationResultRouteWrapper;
 	}
 
-	public void setFreeOdu(String freeOdu) {
-		this.freeOdu = freeOdu;
-	}
-
-	public ArrayList<RouteCalculationResultRoute> getRoute() {
-		return route;
-	}
-
-	public void setRoute(ArrayList<RouteCalculationResultRoute> route) {
-		this.route = route;
+	public void setRoute(ArrayList<RouteCalculationResultRouteWrapper> route) {
+		this.routeCalculationResultRouteWrapper = route;
 	}
 	
 	

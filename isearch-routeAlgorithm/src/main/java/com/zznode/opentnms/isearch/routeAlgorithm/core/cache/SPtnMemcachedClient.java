@@ -69,6 +69,10 @@ public class SPtnMemcachedClient {
 	 * @return
 	 */
 	public Object get(String key) {
+		
+		return primaryMemcachedClient.get(key);
+		
+		/**
 		Object cacheObj = null;
 		try {
 			cacheObj = get(getCurrentMemcachedClient(), key);
@@ -86,6 +90,7 @@ public class SPtnMemcachedClient {
 			}
 		}
 		return cacheObj;
+		*/
 	}
 	
 	/**
@@ -162,6 +167,12 @@ public class SPtnMemcachedClient {
 	 * @throws BaseServiceException 
 	 */
 	public void set(String key, int exp, Object o) {
+		
+		primaryMemcachedClient.set(key , exp, o);
+		
+	}
+	
+	public void setByVersion(String key, int exp, Object o) {
 		Integer currentVersion = (Integer) primaryMemcachedClient.get(CATEGORY_CURRENT_VERSION);
 		primaryMemcachedClient.set(key + VERSION_SUFFIX + getNextVersion(currentVersion), exp, o);
 		currentVersion = (Integer) backupMemcachedClient.get(CATEGORY_CURRENT_VERSION);

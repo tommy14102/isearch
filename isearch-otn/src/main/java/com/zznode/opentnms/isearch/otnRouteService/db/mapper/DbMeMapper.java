@@ -19,6 +19,7 @@ public class DbMeMapper implements RowMapper<DbMe> {
 		me.setManagementDomain(  resultset.getString("ManagementDomain"));              
 		me.setJuzhanobjectid( resultset.getString("Juzhanobjectid"));
 		me.setJifangobjectid(  resultset.getString("Jifangobjectid"));
+		me.setParentmeobjectid( resultset.getString("ParentMeObjectId") );
 		
 		return me ; 
 		

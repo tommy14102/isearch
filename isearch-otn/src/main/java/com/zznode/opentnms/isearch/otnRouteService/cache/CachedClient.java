@@ -65,6 +65,10 @@ public class CachedClient {
 	 * @return
 	 */
 	public Object get(String key) {
+		
+		return primaryMemcachedClient.get(key);
+		
+		/**
 		Object cacheObj = null;
 		try {
 			cacheObj = get(getCurrentMemcachedClient(), key);
@@ -82,6 +86,8 @@ public class CachedClient {
 			}
 		}
 		return cacheObj;
+		*/
+		
 	}
 	
 	/**

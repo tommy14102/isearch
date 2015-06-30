@@ -61,6 +61,18 @@ public class ResourceManager {
 				
 	}
 	
+	public List<DbMe> getChildMeById(String meobjectid){
+		
+		//1.查询ems的tsn信息。
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT * FROM me WHERE 1=1 and parentmeobjectid = '").append(meobjectid).append("' ");
+		//DbMe me = dbUtil.getJdbcTemplate().queryForObject(sb.toString(), new DbMeMapper());
+		List<DbMe> melist = dbUtil.query(sb.toString(), new DbMeMapper());
+		return melist;
+				
+	}
+
+	
 	/**
 	 * 根据板卡类型和厂商获取板卡model
 	 *

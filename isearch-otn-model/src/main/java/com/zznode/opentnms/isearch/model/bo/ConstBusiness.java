@@ -43,26 +43,26 @@ public class ConstBusiness {
 		rateMap.put(8005, 0);
 		rateMap.put(8021, 0);
 		rateMap.put(8022, 0);
-		rateMap.put(76, 1); //2.5G
-		rateMap.put(77, 2); //10G
-		rateMap.put(113, 2);
-		rateMap.put(8008, 2);
-		rateMap.put(8009, 2);
+		rateMap.put(76, 2); //2.5G
+		rateMap.put(77, 3); //10G
+		rateMap.put(113, 3);
+		rateMap.put(8008, 3);
+		rateMap.put(8009, 3);
 		rateMap.put(78, 3);//40G
-		rateMap.put(115, 3);
-		rateMap.put(8043, 4);//100G
+		rateMap.put(115, 4);
+		rateMap.put(8043, 5);//100G
 		
-		rateMap.put(8031, 0);//odu0
-		rateMap.put(104, 1);//odu1
-		rateMap.put(107, 1);//otu1
-		rateMap.put(105, 2);//odu2
-		rateMap.put(108, 2);//otu2
-		rateMap.put(106, 3);//odu3
-		rateMap.put(109, 3);//otu3
-		rateMap.put(8041, 4);//odu4
-		rateMap.put(8042, 4);//otu4
+		rateMap.put(8031, 1);//odu0
+		rateMap.put(104, 2);//odu1
+		rateMap.put(107, 2);//otu1
+		rateMap.put(105, 3);//odu2
+		rateMap.put(108, 3);//otu2
+		rateMap.put(106, 4);//odu3
+		rateMap.put(109, 4);//otu3
+		rateMap.put(8041, 5);//odu4
+		rateMap.put(8042, 5);//otu4
 		
-		rateMap.put(40, 5);//odu4
+		rateMap.put(40, 6);//och
 		
 		rateDescMap.put(50, "GE");
 		rateDescMap.put(65, "GE");

@@ -10,7 +10,15 @@ public class DbMe
 	public String  managementDomain      ="";  //Varchar(255)                         /*管理域（或所属地区）名称*/
 	public String  juzhanobjectid        ="";
 	public String  jifangobjectid        ="";
+	public String  parentmeobjectid      ="";
 	
+	
+	public String getParentmeobjectid() {
+		return parentmeobjectid;
+	}
+	public void setParentmeobjectid(String parentmeobjectid) {
+		this.parentmeobjectid = parentmeobjectid;
+	}
 	public String getObjectId() {
 		return objectId;
 	}

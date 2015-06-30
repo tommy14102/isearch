@@ -8,9 +8,5 @@ encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCal
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationService.java=UTF-8
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationServiceLocator.java=UTF-8
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationServiceSoapBindingStub.java=UTF-8
-encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/webservice/HelloServiceImpl.java=UTF-8
-encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/webservice/HelloServiceImplService.java=UTF-8
-encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/webservice/HelloServiceImplServiceLocator.java=UTF-8
-encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/webservice/HelloServiceImplSoapBindingStub.java=UTF-8
 encoding//src/test/java=UTF-8
 encoding/<project>=UTF-8

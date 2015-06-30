@@ -173,9 +173,9 @@ public class RouteAnalyser {
 					znode.setId(zend);
 					
 					/**
-					if( anode.getId().equals("16020002") && znode.getId().equals("16040002") ){
+					if( anode.getId().equals("16040008") && znode.getId().equals("16060003") ){
 						
-					}else if ( anode.getId().equals("16040002") && znode.getId().equals("16030001") ){
+					}else if ( anode.getId().equals("16060003") && znode.getId().equals("16040008") ){
 						
 					}else{
 						continue ;
@@ -203,7 +203,7 @@ public class RouteAnalyser {
 						//otnLink.setAttrMap(attrMap);
 						linklist.add(otnLink);
 						
-						String key = "OTNLink" + "|" + otnLink.getLinkindex();
+						String key = "OTNLink" + "|" + anode.getId() + "|" + znode.getId() + "|" + otnLink.getLinkindex();
 						cachedClient.set( memcacTag +key, 0, zdResult );
 						logger.error("存贮两点间链路的路由数据："+ key );
 						
@@ -242,7 +242,7 @@ public class RouteAnalyser {
 						//otnLink.setAttrMap(attrMap);
 						linklist.add(otnLink);
 						
-						String key = "OTNLink" + "|" + otnLink.getLinkindex();
+						String key = "OTNLink" + "|" + znode.getId() + "|" + anode.getId() +"|"+ otnLink.getLinkindex();
 						cachedClient.set( memcacTag +key, 0, zdResult );
 						logger.error("存贮两点间链路的反向路由数据："+ key );
 						
@@ -286,7 +286,7 @@ public class RouteAnalyser {
 		List<ZdResult> rtnlist = new ArrayList<ZdResult>();
 		
 		try{
-			busiAnalyser.analyseOtnResourceV3( aendzd , zendzd );
+			rtnlist = busiAnalyser.analyseOtnResourceV3( aendzd , zendzd );
 		}
 		catch(Exception e){
 			logger.error(aendzd+"|"+zendzd+", err accoured",e);
