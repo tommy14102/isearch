@@ -124,6 +124,7 @@ public class ResourceManager {
 		sb2.append("zendmeobjectid,zendptpobjectid ");
 		sb2.append("FROM wdmsncroute WHERE 1=1 and sncobjectid = '").append( sncid ).append("' ");
 		sb2.append("and protectionrole='0' and direction='").append(direction).append("' ");
+		sb2.append(" order by  wdmsncroute.routeseq, wdmsncroute.wayseq ");
 		
 		logger.info("查询数据库路由开始：sncobjectid =" + sncid);
 		List<WdmSncRoute> wdmsncroutelist = dbUtil.getJdbcTemplate().query(sb2.toString(), new WdmSncRouteMapper());
@@ -165,6 +166,7 @@ public class ResourceManager {
 	  	sb.append(" wdmsnc.* ");
 	  	sb.append(" FROM wdmsnc ");
 	  	sb.append(" where wdmsnc.emsobjectid='").append(emsid).append("' ");
+	  	sb.append(" and objectid in ('UUID:516979b8-10da-11e5-9c2d-005056862639','UUID:516979b9-10da-11e5-9c2d-005056862639') ");
 	  	
 	  	logger.info("getZdWmdsnc查询数据库路由开始：" + sb.toString());
 	  	return dbUtil.getJdbcTemplate().query(sb.toString(), new DbWdmSncZdExtractor());

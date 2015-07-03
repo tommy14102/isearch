@@ -2,16 +2,28 @@ package com.zznode.opentnms.isearch.otnRouteService.api.model;
 
 import java.util.ArrayList;
 
+import javax.xml.bind.annotation.XmlType;
+
+@XmlType( propOrder = {"sncid", "freeOdu", "layerDesc","zdCountInSnc","direction","route" })
 public class RouteCalculationResultRouteWrapper {
 
 	private String freeOdu;
 	private Integer zdCountInSnc;
 	private String sncid;
 	private String layerDesc;
+	private Integer direction;
 	
 	private ArrayList<RouteCalculationResultRoute> route = new ArrayList<RouteCalculationResultRoute>() ;
 
 	
+	public Integer getDirection() {
+		return direction;
+	}
+
+	public void setDirection(Integer direction) {
+		this.direction = direction;
+	}
+
 	public Integer getZdCountInSnc() {
 		return zdCountInSnc;
 	}

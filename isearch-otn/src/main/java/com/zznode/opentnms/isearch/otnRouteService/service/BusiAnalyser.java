@@ -751,6 +751,7 @@ public class BusiAnalyser {
 	  	logger.info("wdmsncOdu4Result count::" + wdmsncOdu4Result.size());
 	  	logger.info("wdmsncOchResult count::" + wdmsncOchResult.size());
 	  	
+	  	/**
 	    //8.处理odu0层路径
 	    for (int i = 0; i < wdmsncOdu0Result.size(); i++) {
 	    	DbWdmSncAll wdmsnc = wdmsncOdu0Result.get(i);
@@ -1120,7 +1121,9 @@ public class BusiAnalyser {
 	    	logger.info("zdResult info::" + zdResult);
 	  	}
 	  	
-	  	return allrst ; 
+	  	*/
+	  	
+	  	return null ; 
 	  	
 	}
 	
@@ -1155,6 +1158,7 @@ public class BusiAnalyser {
 		    	}
 		    	
 		    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
+		    	wdmsnc.setIsReverse(Boolean.FALSE);
 		    	wdmsnclist.add(wdmsnc);
 		  	}
 		} 
@@ -1167,6 +1171,13 @@ public class BusiAnalyser {
 			//查询反向波道的波道路由
 		  	for (Iterator<DbWdmSncAll> iter = sncReverselist.iterator(); iter.hasNext();) {
 		  		DbWdmSncAll wdmsnc = iter.next();
+		  		
+		  		if( wdmsnc.getDirection().intValue() == 0 ){
+		  			//单向舍弃
+		  			iter.remove() ; 
+		    		logger.info( "反向波道为单向路由，舍弃:" + wdmsnc.getObjectId() );
+		    		continue ;
+		  		}
 		  		
 		  		List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"1");
 		    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
@@ -1197,6 +1208,7 @@ public class BusiAnalyser {
 	  	//5.循环所有波道，分析oduk的承载关系
 	  	for (Iterator<DbWdmSncAll> iter = wdmsnclist.iterator(); iter.hasNext();) {
 	  		DbWdmSncAll wdmsnc = iter.next();
+	  		
 	  		Integer rate = wdmsnc.getRate();
 	  		if( ConstBusiness.rateDescMap.keySet().contains( rate ) ){	
     	  		wdmsnc.setLayerdesc( Rate.client.getName() );
@@ -1236,9 +1248,9 @@ public class BusiAnalyser {
 	    	*/
 	    	wdmsnc.setHeadctpSer(headctpStr);
 	    	if( (headctpStr==null|| headctpStr.length()==0) && !wdmsnc.getLayerdesc().equals( Rate.och.getName() )  ){
-	    		logger.error("missing headctpStr , wdmsncid::" + wdmsnc.getObjectId() +", rate::" + rate);
-    	  		iter.remove();
-    	  		continue;
+	    		logger.warn("warning: missing headctpStr , wdmsncid::" + wdmsnc.getObjectId() +", rate::" + rate);
+    	  		//iter.remove();
+    	  		//continue;
 	    	}
 		    	
 		    for (int j = 0; j < wdmsnc.getWdmsncroutelist().size(); j++) {
@@ -1264,18 +1276,47 @@ public class BusiAnalyser {
 	  	//7.划分各层数据
 	  	for (Iterator<DbWdmSncAll> iter = wdmsnclist.iterator(); iter.hasNext();) {
 	  		DbWdmSncAll wdmsnc = iter.next();
+	  		
+	  		if( wdmsnc.getObjectId().equals("UUID:515f196c-10da-11e5-9c2d-005056862639")){
+	  			System.out.println(1234);
+	  		}
+	  		
 			if( !wdmsnc.getLayerdesc().equals( Rate.och.getName()) ){
 				
-				ODU odu = ConstBusiness.getOduByCtp(wdmsnc.getHeadctpSer());
-				if(odu==null){
-					logger.error("分析CTP失败,ctp:" + wdmsnc.getHeadctpSer() + ",sncid:"+ wdmsnc.getObjectId());
-					continue;
+				if( wdmsnc.getLayerdesc().equals( Rate.odu4.getName() ) ){
+					ODU4 odu4 = new ODU4();
+					odu4.setIndex(1);
+					
+					odu4.setRate(wdmsnc.getRate());
+					odu4.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(odu4);
 				}
-				
-				ODU sncodu = ConstBusiness.getOduByCtp(wdmsnc.getHeadctpSer());
-				sncodu.setRate(wdmsnc.getRate());
-				sncodu.setSncobjectid(wdmsnc.getObjectId());
-				wdmsnc.setOdu(sncodu);
+				else{
+					ODU sncodu = null;
+					try {
+						sncodu = ConstBusiness.getOduByCtp(wdmsnc.getHeadctpSer());
+					} catch (Exception e) {
+						logger.error("分析CTP失败,ctp:" + wdmsnc.getHeadctpSer() + ",sncid:"+ wdmsnc.getObjectId());
+					}
+					if( sncodu==null){
+						//continue;
+						if( wdmsnc.getLayerdesc().equals( Rate.odu2.getName() ) ){
+							ODU2 odu2 = new ODU2();
+							odu2.setIndex(1);
+							
+							odu2.setRate(wdmsnc.getRate());
+							odu2.setSncobjectid(wdmsnc.getObjectId());
+							wdmsnc.setOdu(odu2);
+						}
+						
+					}
+					else{
+						sncodu.setRate(wdmsnc.getRate());
+						sncodu.setSncobjectid(wdmsnc.getObjectId());
+						wdmsnc.setOdu(sncodu);
+					}
+					
+				}
 			}
 	   		
 			if( wdmsnc.getLayerdesc().equals( Rate.client.getName() ) ){
@@ -1283,7 +1324,13 @@ public class BusiAnalyser {
 					wdmsncClientResult.add(wdmsnc);
 				}
 				else{
-					logger.error("clientrate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
+					logger.warn("warning: clientrate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
+					DSR dsr = new DSR();
+					dsr.setIndex(wdmsnc.getOdu().getIndex());
+					dsr.setRate(wdmsnc.getRate());
+					dsr.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(dsr);
+					wdmsncClientResult.add(wdmsnc);
 				}
 		   	}
 			else if( wdmsnc.getLayerdesc().equals( Rate.odu0.getName())){
@@ -1346,16 +1393,30 @@ public class BusiAnalyser {
     		//查询所有client层数据
     		for (int j = 0; j < wdmsncClientResult.size(); j++) {
     			DbWdmSncAll wdmsncin = wdmsncClientResult.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof DSR){
-						odu0.setDsr((DSR)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
-					}
-					else{
-						logger.error("关联下层数据0，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
-					}
-				}
+    			if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+    				if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu0.setDsr((DSR)odu);
+    						wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据0，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
+    			else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+    				if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu0.setDsr((DSR)odu);
+    						wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据0，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
 			}
 	    }
 	    	
@@ -1365,29 +1426,57 @@ public class BusiAnalyser {
 			ODU1 odu1 = (ODU1)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncClientResult.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof DSR){
-						odu1.getDsrlist().add((DSR)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
-					}
-					else{
-						logger.error("关联下层数据1，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
-					}
-				}
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+    				if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu1.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据1，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
+    			else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+    				if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu1.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据1，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu0Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU0){
-						odu1.getOdu0list().add((ODU0)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu1.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据1，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据1，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu1.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据1，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    }
 	    
@@ -1397,42 +1486,85 @@ public class BusiAnalyser {
 	    	ODU2 odu2 = (ODU2)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncClientResult.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof DSR){
-						odu2.getDsrlist().add((DSR)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
-					}
-					else{
-						logger.error("关联下层数据2，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
-					}
-				}
+	    		
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+    				if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu2.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据2，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
+    			else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+    				if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu2.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据2，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu0Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU0){
-						odu2.getOdu0list().add((ODU0)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu2.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据2，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据2，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu2.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据2，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu1Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU1){
-						odu2.getOdu1list().add((ODU1)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							odu2.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据2，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据2，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							odu2.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据2，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    }
 	    
@@ -1442,55 +1574,113 @@ public class BusiAnalyser {
 	    	ODU3 odu3 = (ODU3)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncClientResult.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof DSR){
-						odu3.getDsrlist().add((DSR)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
-					}
-					else{
-						logger.error("关联下层数据3，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
-					}
-				}
+	    		
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+    				if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu3.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据3，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
+    			else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+    				if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu3.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据3，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu0Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU0){
-						odu3.getOdu0list().add((ODU0)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu3.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据3，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据3，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu3.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据3，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu1Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU1){
-						odu3.getOdu1list().add((ODU1)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							odu3.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据3，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据3，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							odu3.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据3，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
+	    	
 	    	for (int j = 0; j < wdmsncOdu2Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu2Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU2){
-						odu3.getOdu2list().add((ODU2)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU2){
+							odu3.getOdu2list().add((ODU2)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据3，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据3，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU2){
+							odu3.getOdu2list().add((ODU2)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据3，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    }
 	    
@@ -1500,68 +1690,140 @@ public class BusiAnalyser {
 	    	ODU4 odu4 = (ODU4)wdmsnc.getOdu();  
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncClientResult.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof DSR){
-						odu4.getDsrlist().add((DSR)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
-					}
-					else{
-						logger.error("关联下层数据4，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
-					}
-				}
+	    		
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+    				if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu4.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据4，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
+    			else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+    				if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						odu4.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据4，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu0Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU0){
-						odu4.getOdu0list().add((ODU0)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu4.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据4，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							odu4.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu1Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU1){
-						odu4.getOdu1list().add((ODU1)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							odu4.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据4，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							odu4.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
+	    	
 	    	for (int j = 0; j < wdmsncOdu2Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu2Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU2){
-						odu4.getOdu2list().add((ODU2)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU2){
+							odu4.getOdu2list().add((ODU2)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据4，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU2){
+							odu4.getOdu2list().add((ODU2)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    	for (int j = 0; j < wdmsncOdu3Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu3Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU3){
-						odu4.getOdu3list().add((ODU3)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU3){
+							odu4.getOdu3list().add((ODU3)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu3:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据4，转换异常,odu3:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU3){
+							odu4.getOdu3list().add((ODU3)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据4，转换异常,odu3:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    }
 	    
@@ -1570,83 +1832,170 @@ public class BusiAnalyser {
 	    	DbWdmSncAll wdmsnc = wdmsncOchResult.get(i);
 	    	OCH och = new OCH();
 	    	wdmsnc.setOdu(och);
+	    	
 	    	for (int j = 0; j < wdmsncClientResult.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncClientResult.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof DSR){
-						och.getDsrlist().add((DSR)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
-					}
-					else{
-						logger.error("关联下层数据och，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
-					}
-				}
+	    		
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+    				if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						och.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据och，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
+    			else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+    				if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr())  ){
+    					ODU odu = wdmsncin.getOdu();
+    					if( odu instanceof DSR){
+    						och.getDsrlist().add((DSR)odu);
+    						wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+    					}
+    					else{
+    						logger.error("关联下层数据och，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+    					}
+    				}
+    			}
 			}
 	    	for (int j = 0; j < wdmsncOdu0Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu0Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU0){
-						och.getOdu0list().add((ODU0)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							och.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据och，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU0){
+							och.getOdu0list().add((ODU0)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu0:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    	for (int j = 0; j < wdmsncOdu1Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu1Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU1){
-						och.getOdu1list().add((ODU1)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							och.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据och，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU1){
+							och.getOdu1list().add((ODU1)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu1:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
+	    	
 	    	for (int j = 0; j < wdmsncOdu2Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu2Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU2){
-						och.getOdu2list().add((ODU2)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU2){
+							och.getOdu2list().add((ODU2)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据och，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU2){
+							och.getOdu2list().add((ODU2)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu2:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    	for (int j = 0; j < wdmsncOdu3Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu3Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU3){
-						och.getOdu3list().add((ODU3)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU3){
+							och.getOdu3list().add((ODU3)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu3:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据och，转换异常,odu3:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU3){
+							och.getOdu3list().add((ODU3)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu3:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    	for (int j = 0; j < wdmsncOdu4Result.size(); j++) {
 	    		DbWdmSncAll wdmsncin = wdmsncOdu4Result.get(j);
-				if( !wdmsncin.isCaculated && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
-					ODU odu = wdmsncin.getOdu();
-					if( odu instanceof ODU4){
-						och.getOdu4list().add((ODU4)odu);
-						wdmsncin.setIsCaculated(Boolean.TRUE);
+	    		if( wdmsnc.getIsReverse().equals(Boolean.FALSE)){
+	    			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU4){
+							och.getOdu4list().add((ODU4)odu);
+							wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu4:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+						}
 					}
-					else{
-						logger.error("关联下层数据och，转换异常,odu4:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsnc.getObjectId());
+	    		}
+	    		else if( wdmsnc.getIsReverse().equals(Boolean.TRUE)){
+	    			if( !wdmsncin.getIsCaculatedReverse() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
+						ODU odu = wdmsncin.getOdu();
+						if( odu instanceof ODU4){
+							och.getOdu4list().add((ODU4)odu);
+							wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
+						}
+						else{
+							logger.error("关联下层数据och，转换异常,odu4:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
+						}
 					}
-				}
+	    		}
 			}
 	    }
 
@@ -1667,9 +2016,9 @@ public class BusiAnalyser {
 	  		
 	  		DbWdmSncAll wdmsnc = iter.next();
 	  		if( wdmsnc.isReverse ){
-	  			logger.info("isReverse drop::" + wdmsnc.getObjectId());
-	  			wdmsnc.setIsReverse(Boolean.FALSE);
-	  			continue ;
+	  			//logger.info("isReverse drop::" + wdmsnc.getObjectId());
+	  			//wdmsnc.setIsReverse(Boolean.FALSE);
+	  			//continue ;
 	  		}
 	  		ZdResult zdResult = new ZdResult();
 	  		zdResult.setLayerdesc( wdmsnc.getLayerdesc() );

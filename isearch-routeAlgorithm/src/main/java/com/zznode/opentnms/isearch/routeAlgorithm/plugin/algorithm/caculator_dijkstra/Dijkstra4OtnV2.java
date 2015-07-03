@@ -32,12 +32,15 @@ import com.zznode.opentnms.isearch.routeAlgorithm.api.model.Section;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.model.otn.ExCluseBean;
 import com.zznode.opentnms.isearch.routeAlgorithm.core.algorithm.AlgorithmProcessor;
 import com.zznode.opentnms.isearch.routeAlgorithm.core.cache.SPtnMemcachedClient;
+import com.zznode.opentnms.isearch.routeAlgorithm.plugin.data.importor_dbbase.DBUtil;
 
 public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 
 	 private static Logger log = Logger.getLogger(Dijkstra4OtnV2.class);
 	 
 	 private SPtnMemcachedClient cacheClient = (SPtnMemcachedClient)App.factory.getBean("SPtnMemcachedClient");
+	 
+	 private DBUtil dbClient = (DBUtil)App.factory.getBean("DBUtil");
 	    
 	 	Set<Integer> openSet =new HashSet<Integer>();   // 未处理过的节点
 	    Set<Integer> closedSet =new HashSet<Integer>();  //已经处理过的节点
@@ -49,12 +52,52 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    @Override
 		protected List<CaculatorResultWay> doCaculate( CaculatorParam param ) {
 	    	
+	    	List<CaculatorResultWay> rtnlist = new ArrayList<CaculatorResultWay>();
 	    	String aendid = param.getAend();
 	    	String zendid = param.getZend();
 	    	List<String> aendme = param.getAendme();
 	    	List<String> zendme = param.getZendme();
 	    	
-	    	return dijkstra( aendid, zendid, aendme , zendme ,param );
+	    	List<CaculatorResultWay> mainRoute =  dijkstra( aendid, zendid, aendme , zendme ,param ) ;
+	    	if(mainRoute==null){
+	    		return null;
+	    	}
+	    	rtnlist.addAll(mainRoute);
+	    	
+	    	//找到主用路径后，删除中间节点的关系，再次查找。
+	    	for (int i = 0; i < mainRoute.size(); i++) {
+	    		CaculatorResultWay way = mainRoute.get(i);
+	    		LinkedList<CaculatorResultWayRoute>  sway  = way.getRouts();
+	    		for (int j = 1; j < sway.size()-1; j++) {
+	    			String nodeid = sway.get(j).getNodeid();
+	    			Integer nodeindex = (Integer)pointMap.get(nodeid);
+	    			//matrix中，这个节点全部链路删除
+	    	    	int size = matrix.length;
+	    	    	for (int k = 0; k < size; k++) {
+	    	    		for (int l = 0; l < size; l++) {
+	    	    			if( k==nodeindex.intValue() || l== nodeindex.intValue()){
+	    	    				matrix[k][l] = null;
+	    	    				matrix[l][k] = null;
+	    	    			}
+	    	    		}
+	    			}
+				}
+			}
+	    	
+	    	
+	    	
+	    	openSet.clear();
+	    	closedSet.clear();
+	    	distanceMap.clear();
+	    	path.clear();
+	    	
+	    	List<CaculatorResultWay> bakRoute =  dijkstra( aendid, zendid, aendme , zendme ,param ) ;
+	    	if(bakRoute!=null){
+	    		rtnlist.addAll(bakRoute);
+	    	}
+	    	
+	    	
+	    	return rtnlist;
 	    	
 		}
 
@@ -82,15 +125,15 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	String zendptp = (String)param.getAttrMap().get("zendptp");
 	    	String zendctp = (String)param.getAttrMap().get("zendctp");
 	    	
-	    	//禁止网元
+	    	//必经网元
 	    	List<String> excludeMelist = (List<String>)param.getAttrMap().get("excludeMelist");
-	    	//禁止端口
+	    	//必经端口
 	    	List<String> excludePtplist = (List<String>)param.getAttrMap().get("excludePtplist");
 	    	excludeMelist = excludeMelist==null ? new ArrayList<String>() : excludeMelist ; 
 	    	excludePtplist = excludePtplist==null ? new ArrayList<String>() : excludePtplist ; 
 	    	
-	    	//必经点最近原则
-	    	Map<String ,List<ExCluseBean> > clusebeanMap = (Map<String ,List<ExCluseBean> >)param.getAttrMap().get("cluselist");
+	    	//禁止点最近原则
+	    	Map<String ,List<ExCluseBean> > inclusemap = (Map<String ,List<ExCluseBean> >)param.getAttrMap().get("inclusemap");
 	    	
 	    	Section sec = matrix[aendindex][zendindex];
 	    	if(sec==null){
@@ -196,11 +239,23 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		ZdResult zdResult = (ZdResult)cacheClient.get(key);
 	    		//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 	    		//判断是否有可用资源
+	    		if(zdResult.getSncid().equals("UUID:516a8b47-10da-11e5-9c2d-005056862639")  ){
+	    			System.out.println(7788);
+	    		}
 	    		if(zdResult.getODUinfo(param.getRate()).equals("")){
 	    			iter.remove();
 	    			log.debug( " 计算两点间距离 ，按资源过滤:"+ zdResult.getSncid() );
 	    			continue ;
 	    		}
+	    		
+	    		//客户侧路径，根据占用进行判断
+				if( zdResult.getOdu() instanceof DSR ){
+					String sncid = zdResult.getSncid();
+					if( hasCucirtBySncid(sncid) ){
+						log.info("计算两点间距离 ，根据客户层路径已占用过滤:" + zdResult.getSncid());
+						continue;
+					}
+				}
 	    		
 	    		if( excludeMelist.size()>0 || excludePtplist.size()>0 ){
 	    			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
@@ -224,12 +279,12 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		}
 	    		
 	    		//必经点包含在a端站点内
-	    		if( clusebeanMap.containsKey( sec.getAendNode())  ){
+	    		if( inclusemap.containsKey( sec.getAendNode())  ){
 	    			
 	    			Set<String> cmelist = new HashSet<String>();
 	    			Set<String> cptplist = new HashSet<String>();
 	    			
-	    			List<ExCluseBean> beans = clusebeanMap.get(sec.getAendNode());
+	    			List<ExCluseBean> beans = inclusemap.get(sec.getAendNode());
 	    			for (int i = 0; i < beans.size(); i++) {
 	    				if(!StringUtils.isEmpty(beans.get(i).getPtpid())){
 	    					cptplist.add(beans.get(i).getPtpid());
@@ -267,12 +322,12 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		}
 	    		
 	    		//必经点包含在z端站点内
-	    		if( clusebeanMap.containsKey( sec.getZendNode())  ){
+	    		if( inclusemap.containsKey( sec.getZendNode())  ){
 	    			
 	    			Set<String> cmelist = new HashSet<String>();
 	    			Set<String> cptplist = new HashSet<String>();
 	    			
-	    			List<ExCluseBean> beans = clusebeanMap.get(sec.getZendNode());
+	    			List<ExCluseBean> beans = inclusemap.get(sec.getZendNode());
 	    			for (int i = 0; i < beans.size(); i++) {
 	    				if(!StringUtils.isEmpty(beans.get(i).getPtpid())){
 	    					cptplist.add(beans.get(i).getPtpid());
@@ -316,7 +371,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	}
 	    	
 	    	//如果包含必经点，那么返回最短距离
-	    	if( clusebeanMap.containsKey( sec.getAendNode()) ||clusebeanMap.containsKey( sec.getZendNode()) ){
+	    	if( inclusemap.containsKey( sec.getAendNode()) ||inclusemap.containsKey( sec.getZendNode()) ){
 	    		return Long.MAX_VALUE * -1 ; 
 	    	}
 	    	
@@ -336,8 +391,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 			
 	        for (int i = 0; i < matrix.length; i++) {  
 	        	
+	        	if( i == zendindex.intValue() ){
+	        		distanceMap.put(i, unreachable);  
+	        	}
 	        	// 用start相邻的点初始化distanceMap  
-	        	if( matrix[startindex][i] ==null   ){
+	        	else if( matrix[startindex][i] ==null   ){
 	        		distanceMap.put(i, unreachable);  
 	        	}
 	        	else{
@@ -438,22 +496,22 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
         				   route.getClientrouts().add(link);
         			   }
         			   else if(zdResult.getOdu() instanceof ODU0){
-        				   route.getClientrouts().add(link);
+        				   route.getOdu0routs().add(link);
         			   }
         			   else if(zdResult.getOdu() instanceof ODU1){
-        				   route.getClientrouts().add(link);
+        				   route.getOdu1routs().add(link);
         			   }
         			   else if(zdResult.getOdu() instanceof ODU2){
-        				   route.getClientrouts().add(link);
+        				   route.getOdu2routs().add(link);
         			   }
         			   else if(zdResult.getOdu() instanceof ODU3){
-        				   route.getClientrouts().add(link);
+        				   route.getOdu3routs().add(link);
         			   }
         			   else if(zdResult.getOdu() instanceof ODU4){
-        				   route.getClientrouts().add(link);
+        				   route.getOdu4routs().add(link);
         			   }
         			   else if(zdResult.getOdu() instanceof OCH){
-        				   route.getClientrouts().add(link);
+        				   route.getOchrouts().add(link);
         			   }
         		   }
  			   }
@@ -465,6 +523,17 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 		       
        		return ways ;
 		       
+		}
+		
+		
+		public boolean hasCucirtBySncid(String sncid){
+			
+			String  sql = " select count(objectid) from circuit where objectid in ( select circuitobjectid from circuitroute where relatedrouteobjectid = '"+sncid +"' ) ";
+			
+			String cucirtid = dbClient.getJdbcTemplate().queryForObject(sql, String.class);
+					
+			return !cucirtid.equals("0");
+					
 		}
 		
 		

@@ -119,6 +119,16 @@ public class Link implements Serializable{
 
 	public void setZendnode(Node zendnode) {
 		this.zendnode = zendnode;
+	}
+
+
+	@Override
+	public String toString() {
+		return "Link [id=" + id + ", jump=" + jump + ", latency=" + latency
+				+ ", avilableWidth=" + avilableWidth + ", direction="
+				+ direction + ", aendnode=" + aendnode + ", zendnode="
+				+ zendnode + ", linkindex=" + linkindex + ", zdResult="
+				+ zdResult + "]";
 	} 
 
 	

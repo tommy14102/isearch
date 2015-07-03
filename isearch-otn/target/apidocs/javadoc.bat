@@ -1,1 +1,1 @@
-D:\dev-env\Java\jdk1.6.0_45\jre\..\bin\javadoc.exe @options @packages
+"C:\Program Files\Java\jdk1.5.0_22\jre\..\bin\javadoc.exe" @options @packages

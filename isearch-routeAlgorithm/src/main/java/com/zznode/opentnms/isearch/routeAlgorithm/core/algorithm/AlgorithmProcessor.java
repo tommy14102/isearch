@@ -18,7 +18,7 @@ import com.zznode.opentnms.isearch.routeAlgorithm.core.matrix.Matrix;
 public abstract class AlgorithmProcessor {
 	
 	private static Logger log = Logger.getLogger(AlgorithmProcessor.class);
-	private SPtnMemcachedClient testobj = (SPtnMemcachedClient)App.factory.getBean("SPtnMemcachedClient");
+	private SPtnMemcachedClient cacheobj = (SPtnMemcachedClient)App.factory.getBean("SPtnMemcachedClient");
 	
 	
 	protected Matrix matrixholder;
@@ -30,7 +30,7 @@ public abstract class AlgorithmProcessor {
 
 	 public CaculatorResult caculate(String businessAvatorKey , CaculatorParam param){
 		 
-		 Matrix matrix = (Matrix)testobj.get(businessAvatorKey);
+		 Matrix matrix = (Matrix)cacheobj.get(businessAvatorKey);
 		 
 		 if( matrix ==null ){
 			 log.error("memcached中未查询到资源信息");

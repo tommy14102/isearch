@@ -36,7 +36,8 @@ public class DbWdmSncAll implements Serializable
         public List<WdmSncRoute> wdmsncroutelist = new ArrayList<WdmSncRoute>();
         public List<WdmSncRoute> wdmsncrouteReverselist = new ArrayList<WdmSncRoute>();
         public String ratedesc = "" ; 
-        public Boolean isCaculated = false ;
+        public Boolean isCaculatedBid = false ;
+        public Boolean isCaculatedReverse = false ;
         public Boolean isReverse = false ;
         
         private String aendjz;
@@ -204,11 +205,17 @@ public class DbWdmSncAll implements Serializable
 		public void setRatedesc(String ratedesc) {
 			this.ratedesc = ratedesc;
 		}
-		public Boolean getIsCaculated() {
-			return isCaculated;
+		public Boolean getIsCaculatedBid() {
+			return isCaculatedBid;
 		}
-		public void setIsCaculated(Boolean isCaculated) {
-			this.isCaculated = isCaculated;
+		public void setIsCaculatedBid(Boolean isCaculatedBid) {
+			this.isCaculatedBid = isCaculatedBid;
+		}
+		public Boolean getIsCaculatedReverse() {
+			return isCaculatedReverse;
+		}
+		public void setIsCaculatedReverse(Boolean isCaculatedReverse) {
+			this.isCaculatedReverse = isCaculatedReverse;
 		}
 		public Boolean getIsReverse() {
 			return isReverse;

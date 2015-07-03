@@ -9,12 +9,20 @@ public class ODU0 extends ODU{
 	
 
 	public String getFreeODU(Integer rate_i){
-		int ratelevel = ConstBusiness.rateMap.get(rate_i).intValue();
-		if( ratelevel == 0 ){
+		Integer ratelevel = ConstBusiness.rateMap.get(rate_i);
+		if( ratelevel!=null && ratelevel.intValue() == 0 ){
 			if( dsr==null ){
 				return "/odu0" + index ; 
 			}
 		}
+		
+		Integer odulevel = ConstBusiness.odukMap.get(rate_i);
+		if( odulevel!=null && ratelevel.intValue() == 1 ){
+			if( dsr==null ){
+				return "/odu0" + index ; 
+			}
+		}
+		
 		return "";
 	}
 	

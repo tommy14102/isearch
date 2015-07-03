@@ -21,8 +21,10 @@ public class ODU2 extends ODU{
 
 	public String getFreeODU(Integer rate_i){
 		
-		int ratelevel = ConstBusiness.rateMap.get(rate_i).intValue();
-		if( ratelevel == 0 ){
+		Integer ratelevel = ConstBusiness.rateMap.get(rate_i);
+		Integer odulevel = ConstBusiness.odukMap.get(rate_i);
+		
+		if( (ratelevel!=null && ratelevel.intValue() == 0)||(odulevel!=null && odulevel.intValue() == 1) ){
 			
 			int[] odu0Array = new int[9];
 			Arrays.fill(odu0Array, 1);  //一个odu2共有8个odu0
@@ -75,7 +77,7 @@ public class ODU2 extends ODU{
 			return rtnStr;
 			
 		}
-		else if( ratelevel == 1 ){
+		else if( (ratelevel!=null && ratelevel.intValue() == 2)||(odulevel!=null && odulevel.intValue() == 2) ){
 			
 			int[] odu0Array = new int[5];
 			Arrays.fill(odu0Array, 1);  //一个odu2共有4个odu1
@@ -129,10 +131,10 @@ public class ODU2 extends ODU{
 			return rtnStr;
 			
 		}
-		else if( ratelevel == 2 ){
+		else if( (ratelevel!=null && ratelevel.intValue() == 3)||(odulevel!=null && odulevel.intValue() == 3) ){
 			//如果有占用，那么就不足一个odu1，返回空
-			if( odu0list.size() == 0 || odu1list.size() == 0 || dsrlist.size() == 0 ){
-				return "/odu1="+index ;
+			if( odu0list.size() == 0 && odu1list.size() == 0 && dsrlist.size() == 0 ){
+				return "/odu2="+index ;
 			}
 		}
 		return "";

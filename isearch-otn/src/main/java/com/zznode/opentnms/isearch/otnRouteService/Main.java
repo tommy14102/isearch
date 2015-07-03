@@ -18,7 +18,7 @@ public class Main {
 	public static RouteAnalyser routeAnalyser ;
 	public static BusiAnalyser busiAnalyser ;
 	public static JettyService jettyService ;
-	
+	 
 	static{
 		factory = new ClassPathXmlApplicationContext("application-ors.xml","application-ors-memcached.xml","application-ors-jdbc.xml");
 		routeAnalyser =  (RouteAnalyser)factory.getBean("routeAnalyser");

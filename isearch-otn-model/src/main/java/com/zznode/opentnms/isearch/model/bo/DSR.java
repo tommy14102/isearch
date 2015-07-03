@@ -12,7 +12,6 @@ public class DSR extends ODU{
 	private Integer index ;
 	
 	public String getFreeODU(Integer rate){
-		int ratelevel = ConstBusiness.rateMap.get(rate).intValue();
 		return "/dsr" + index ; 
 	}
 

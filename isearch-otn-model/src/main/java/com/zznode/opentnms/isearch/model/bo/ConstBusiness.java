@@ -14,6 +14,9 @@ public class ConstBusiness {
 	//客户层速率对应表
 	public static Map<Integer,Integer> rateMap = new HashMap<Integer,Integer>();
 	
+	//oduk速率对应表
+	public static Map<Integer,Integer> odukMap = new HashMap<Integer,Integer>();
+	
 	//客户层速率对应描述
 	public static Map<Integer,String> rateDescMap = new HashMap<Integer,String>();
 	
@@ -45,24 +48,24 @@ public class ConstBusiness {
 		rateMap.put(8022, 0);
 		rateMap.put(76, 2); //2.5G
 		rateMap.put(77, 3); //10G
-		rateMap.put(113, 3);
-		rateMap.put(8008, 3);
-		rateMap.put(8009, 3);
-		rateMap.put(78, 3);//40G
-		rateMap.put(115, 4);
+		rateMap.put(113, 3);//10G
+		rateMap.put(8008, 3);//10G
+		rateMap.put(8009, 3);//10G
+		rateMap.put(78, 4);//40G
+		rateMap.put(115, 4);//40G
 		rateMap.put(8043, 5);//100G
 		
-		rateMap.put(8031, 1);//odu0
-		rateMap.put(104, 2);//odu1
-		rateMap.put(107, 2);//otu1
-		rateMap.put(105, 3);//odu2
-		rateMap.put(108, 3);//otu2
-		rateMap.put(106, 4);//odu3
-		rateMap.put(109, 4);//otu3
-		rateMap.put(8041, 5);//odu4
-		rateMap.put(8042, 5);//otu4
+		odukMap.put(8031, 1);//odu0
+		odukMap.put(104, 2);//odu1
+		odukMap.put(107, 2);//otu1
+		odukMap.put(105, 3);//odu2
+		odukMap.put(108, 3);//otu2
+		odukMap.put(106, 4);//odu3
+		odukMap.put(109, 4);//otu3
+		odukMap.put(8041, 5);//odu4
+		odukMap.put(8042, 5);//otu4
 		
-		rateMap.put(40, 6);//och
+		odukMap.put(40, 6);//och
 		
 		rateDescMap.put(50, "GE");
 		rateDescMap.put(65, "GE");
@@ -167,6 +170,14 @@ public class ConstBusiness {
 			ODU3 odu3 = new ODU3();
 			odu3.setIndex(Integer.valueOf(m.group(1)));
 			return odu3 ; 
+		}
+		
+		p = Pattern.compile(".*/o[dt]u4=(\\d*)", Pattern.CASE_INSENSITIVE);
+		m = p.matcher(ctp);
+		if( m.matches()  ){
+			ODU4 odu4 = new ODU4();
+			odu4.setIndex(Integer.valueOf(m.group(1)));
+			return odu4 ; 
 		}
 		
 		return null ;

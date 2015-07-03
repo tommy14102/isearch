@@ -2,6 +2,9 @@ package com.zznode.opentnms.isearch.otnRouteService.api.model;
 
 import java.util.ArrayList;
 
+import javax.xml.bind.annotation.XmlType;
+
+@XmlType( propOrder = {"zdCount", "busiCount", "routeCalculationResultRouteWrapper" })
 public class RouteCalculationResult {
 
 	private Integer zdCount;
@@ -26,17 +29,15 @@ public class RouteCalculationResult {
 		this.busiCount = busiCount;
 	}
 
-
-	public ArrayList<RouteCalculationResultRouteWrapper> getRoute() {
+	public ArrayList<RouteCalculationResultRouteWrapper> getRouteCalculationResultRouteWrapper() {
 		return routeCalculationResultRouteWrapper;
 	}
 
-	public void setRoute(ArrayList<RouteCalculationResultRouteWrapper> route) {
-		this.routeCalculationResultRouteWrapper = route;
+	public void setRouteCalculationResultRouteWrapper(
+			ArrayList<RouteCalculationResultRouteWrapper> routeCalculationResultRouteWrapper) {
+		this.routeCalculationResultRouteWrapper = routeCalculationResultRouteWrapper;
 	}
-	
-	
-	
+
 
 	
 }

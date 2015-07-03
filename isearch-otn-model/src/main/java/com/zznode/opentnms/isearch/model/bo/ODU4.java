@@ -25,10 +25,12 @@ public class ODU4 extends ODU{
 	
 	public String getFreeODU(Integer rate_i){
 		
-		int ratelevel = ConstBusiness.rateMap.get(rate_i).intValue();
-		if( ratelevel == 0 ){
+		Integer ratelevel = ConstBusiness.rateMap.get(rate_i);
+		Integer odulevel = ConstBusiness.odukMap.get(rate_i);
+		
+		if( (ratelevel!=null && ratelevel.intValue() == 0)||(odulevel!=null && odulevel.intValue() == 1) ){
 			
-			int[] odu0Array = new int[2*32+2*8];
+			int[] odu0Array = new int[2*32+2*8 + 1];
 			Arrays.fill(odu0Array, 1);  //一个odu4共有2*32+2*8个odu0
 			
 			//排除odu0的占用资源
@@ -117,9 +119,9 @@ public class ODU4 extends ODU{
 			return rtnStr;
 			
 		}
-		else if( ratelevel == 1 ){
+		else if( (ratelevel!=null && ratelevel.intValue() == 2)||(odulevel!=null && odulevel.intValue() == 2) ){
 			
-			int[] odu0Array = new int[2*16+2*4];
+			int[] odu0Array = new int[2*16+2*4 + 1];
 			Arrays.fill(odu0Array, 1);  //一个odu3共有2*16+2*4个odu1
 			
 			//排除odu0的占用资源
@@ -202,7 +204,7 @@ public class ODU4 extends ODU{
 			return rtnStr;
 			
 		}
-		else if( ratelevel == 2 ){
+		else if( (ratelevel!=null && ratelevel.intValue() == 3)||(odulevel!=null && odulevel.intValue() == 3) ){
 			
 			int[] odu0Array = new int[11];
 			Arrays.fill(odu0Array, 1);  //一个odu4共有10个odu2
@@ -280,10 +282,10 @@ public class ODU4 extends ODU{
 			return rtnStr;
 			
 		}
-		else if( ratelevel == 3 ){
+		else if( (ratelevel!=null && ratelevel.intValue() == 4)||(odulevel!=null && odulevel.intValue() == 4) ){
 			
-			int[] odu0Array = new int[3];
-			Arrays.fill(odu0Array, 1);  //一个odu4共有2个odu3
+			int[] odu0Array = new int[4];
+			Arrays.fill(odu0Array, 1);  //一个odu4共有2.5个odu3
 			
 			//排除odu0的占用资源
 			for (int i = 0; i < odu0list.size(); i++) {
@@ -338,7 +340,7 @@ public class ODU4 extends ODU{
 			}
 			
 			String freeodu0Str = ""; 
-			for (int i = 1; i < odu0Array.length; i++) {
+			for (int i = 1; i < odu0Array.length-1; i++) {
 				if( odu0Array[i] == 1){
 					freeodu0Str += ","+i ; 
 				}
@@ -352,9 +354,9 @@ public class ODU4 extends ODU{
 			return rtnStr;
 			
 		}
-		else if( ratelevel ==4 ){
+		else if( (ratelevel!=null && ratelevel.intValue() == 5)||(odulevel!=null && odulevel.intValue() == 5) ){
 			//如果有占用，那么就不足一个odu1，返回空
-			if( odu0list.size() == 0 || odu1list.size() == 0 ||  odu2list.size() == 0 ||  odu3list.size() == 0 || dsrlist.size() == 0 ){
+			if( odu0list.size() == 0 && odu1list.size() == 0 && odu2list.size() == 0 && odu3list.size() == 0 && dsrlist.size() == 0 ){
 				return "/odu4="+index ;
 			}
 		}

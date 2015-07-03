@@ -3,15 +3,22 @@ package com.zznode.opentnms.isearch.otnRouteService.api.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlType;
 
+@XmlType( propOrder = {"routePlanobjectid","routePlanseq","routeseq" ,"rate", "protectionType","routeCalculationResultWrapper"  })
 public class RouteCalculationOutput {
 
 	private String routePlanobjectid;
 	private String routePlanseq;
 	private String routeseq;
 	private Integer rate;
-	private String ProtectionType;
-	private List<RouteCalculationResult> routeCalculationResult ;
+	private String protectionType;
+	
+	//@XmlElementWrapper(name="rcResult")  
+	//@XmlElement(name="rc-work") 
+	private List<RouteCalculationResultWrapper> routeCalculationResultWrapper = new ArrayList<RouteCalculationResultWrapper>();
 	
 	public String getRoutePlanobjectid() {
 		return routePlanobjectid;
@@ -38,17 +45,17 @@ public class RouteCalculationOutput {
 		this.rate = rate;
 	}
 	public String getProtectionType() {
-		return ProtectionType;
+		return protectionType;
 	}
 	public void setProtectionType(String protectionType) {
-		ProtectionType = protectionType;
+		this.protectionType = protectionType;
 	}
-	public List<RouteCalculationResult> getRouteCalculationResult() {
-		return routeCalculationResult;
+	public List<RouteCalculationResultWrapper> getRouteCalculationResultWrapper() {
+		return routeCalculationResultWrapper;
 	}
-	public void setRouteCalculationResult(
-			List<RouteCalculationResult> routeCalculationResult) {
-		this.routeCalculationResult = routeCalculationResult;
+	public void setRouteCalculationResultWrapper(
+			List<RouteCalculationResultWrapper> routeCalculationResultWrapper) {
+		this.routeCalculationResultWrapper = routeCalculationResultWrapper;
 	}
 	
 	

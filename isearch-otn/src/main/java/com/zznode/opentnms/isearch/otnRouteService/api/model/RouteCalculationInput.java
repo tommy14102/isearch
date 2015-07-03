@@ -27,9 +27,8 @@ public class RouteCalculationInput {
 	private String ProtectionType;
 	private String additionalInfo;
 	
-	private List<ClusionBean> inclusionResource;
-	private List<ClusionBean> exclusionResource;
-	
+	private RouteCalculationInputWrapper inclusionResource = new RouteCalculationInputWrapper();
+	private RouteCalculationInputWrapper exclusionResource = new RouteCalculationInputWrapper();
 	
 	
 	public String checkmyself(){
@@ -42,7 +41,7 @@ public class RouteCalculationInput {
 		if(rate==null||rate.intValue()==0){
 			return "missing rate info.";
 		}
-		if( ConstBusiness.rateMap.get(rate)==null){
+		if( ConstBusiness.rateMap.get(rate)==null && ConstBusiness.odukMap.get(rate)==null){
 			return "bad rate info.";
 		}
 		return "";
@@ -165,21 +164,22 @@ public class RouteCalculationInput {
 		this.zendbuildingname = zendbuildingname;
 	}
 
-	public List<ClusionBean> getInclusionResource() {
+	public RouteCalculationInputWrapper getInclusionWrapper() {
 		return inclusionResource;
 	}
 
-	public void setInclusionResource(List<ClusionBean> inclusionResource) {
-		this.inclusionResource = inclusionResource;
+	public void setInclusionWrapper(RouteCalculationInputWrapper inclusionWrapper) {
+		this.inclusionResource = inclusionWrapper;
 	}
 
-	public List<ClusionBean> getExclusionResource() {
+	public RouteCalculationInputWrapper getExclusionWrapper() {
 		return exclusionResource;
 	}
 
-	public void setExclusionResource(List<ClusionBean> exclusionResource) {
-		this.exclusionResource = exclusionResource;
+	public void setExclusionWrapper(RouteCalculationInputWrapper exclusionWrapper) {
+		this.exclusionResource = exclusionWrapper;
 	}
+
 	
 	
 
