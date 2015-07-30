@@ -133,6 +133,8 @@ public class RouteAnalyser {
 			
 		logger.info("全网tsn数量：" + tsnGlist.size());
 		Set<String> dealedSet = new HashSet<String>();
+		//Map<String,Integer> dealedIndex = new HashMap<String,Integer>();
+		
 		Map<String,ArrayList<String>> zjMap = new HashMap<String,ArrayList<String>>();
 		
 		for (Iterator<TsnGraph> iter = tsnGlist.iterator(); iter.hasNext();) {
@@ -172,21 +174,22 @@ public class RouteAnalyser {
 					OtnNode znode = new OtnNode();
 					znode.setId(zend);
 					
-					/**
-					if( anode.getId().equals("16040008") && znode.getId().equals("16060003") ){
+					if( anode.getId().equals("16040008") && znode.getId().equals("327364974658312") ){
 						
-					}else if ( anode.getId().equals("16060003") && znode.getId().equals("16040008") ){
+					}else if ( anode.getId().equals("327364974658312") && znode.getId().equals("16040008") ){
 						
 					}else{
 						continue ;
 					}
-					*/
 					
-					String dealedkey = anode.getId() + "|" + znode.getId() ; 
+					String dealedNode =  anode.getId() + "|" + znode.getId() ;
+					String dealedkey = tsnGraph.getEmsid() + "|" + anode.getId() + "|" + znode.getId() ; 
 					if( dealedSet.contains( dealedkey )){
+						logger.info("处理tsn,站点已经处理过 ：" + dealedkey);
 						continue ;
 					}
 					dealedSet.add( dealedkey );
+					//dealedIndex.put(dealedNode, 1);
 					List<ZdResult> resultlist = doAnalyserZdRoute(busiAnalyser, anode.getId(), znode.getId());
 					//List<ZdResult> resultlist = busiAnalyser.analyseOtnResourceV3(anode.getId(), znode.getId());
 					int tagi = 1;

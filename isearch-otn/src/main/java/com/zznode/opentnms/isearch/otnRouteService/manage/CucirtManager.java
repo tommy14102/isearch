@@ -15,9 +15,12 @@ public class CucirtManager {
 		
 		String  sql = " select count(objectid) from circuit where objectid in ( select circuitobjectid from circuitroute where relatedrouteobjectid = '"+sncid +"' ) ";
 		
+		
+		
 		String cucirtid = dbUtil.getJdbcTemplate().queryForObject(sql, String.class);
 				
 		return !cucirtid.equals("0");
-				
+			
+		
 	}
 }

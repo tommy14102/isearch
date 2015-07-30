@@ -1,6 +1,8 @@
 package com.zznode.opentnms.isearch.otnRouteService.util;
 
 
+import java.util.List;
+
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
@@ -25,6 +27,7 @@ public class PropertiesHander {
             strategy.setRefreshDelay(30000);  
             configuration.setReloadingStrategy(strategy);  
             configuration.isAutoSave();
+            
         }  
         return configuration;  
     }  
@@ -41,5 +44,10 @@ public class PropertiesHander {
         getIntance().setProperty(propertyName, value);
         configuration.save();
     }  
+    
+    public static String[] getPropertylist(String propertyName) {  
+        return getIntance().getStringArray(propertyName);
+    }  
+    
 
 }

@@ -209,6 +209,10 @@ public class DbWdmSncAll implements Serializable
 			return isCaculatedBid;
 		}
 		public void setIsCaculatedBid(Boolean isCaculatedBid) {
+			
+			if("UUID:5165a955-10da-11e5-9c2d-005056862639".equals(this.objectId)){
+				System.out.println(999);
+			}
 			this.isCaculatedBid = isCaculatedBid;
 		}
 		public Boolean getIsCaculatedReverse() {

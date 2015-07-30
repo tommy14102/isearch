@@ -19,7 +19,7 @@ public class ZdResult implements Serializable{
 	private String layerdesc ;
 	private Integer direction ; 
 	
-	private Map<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
+	private LinkedHashMap<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
 
 	public String getODUinfo( Integer rate ){
 		
@@ -70,11 +70,11 @@ public class ZdResult implements Serializable{
 
 
 
-	public Map<String, LinkedList<ZdResultSingle>> getZdmap() {
+	public LinkedHashMap<String, LinkedList<ZdResultSingle>> getZdmap() {
 		return zdmap;
 	}
 
-	public void setZdmap(Map<String, LinkedList<ZdResultSingle>> zdmap) {
+	public void setZdmap(LinkedHashMap<String, LinkedList<ZdResultSingle>> zdmap) {
 		this.zdmap = zdmap;
 	}
 	

@@ -32,6 +32,10 @@ public class CaculatorResultWayRoute {
 	public void setAttrMap(Map attrMap) {
 		this.attrMap = attrMap;
 	}
+	
+	public int getAllRouteCount(){
+		return clientrouts.size() + odu0routs.size() + odu1routs.size() + odu2routs.size() + odu3routs.size() + odu4routs.size();
+	}
 
 	public LinkedList<Link> getRouteByType(int layer){
 		if( layer==0){

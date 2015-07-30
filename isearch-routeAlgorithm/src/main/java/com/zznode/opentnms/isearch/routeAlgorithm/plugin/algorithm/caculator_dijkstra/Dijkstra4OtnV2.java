@@ -49,39 +49,51 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    HashMap<Integer, Long> distanceMap = new HashMap<Integer, Long>();  
 	    Long unreachable = Long.MAX_VALUE ; 
 	    
+	    
 	    @Override
 		protected List<CaculatorResultWay> doCaculate( CaculatorParam param ) {
 	    	
 	    	List<CaculatorResultWay> rtnlist = new ArrayList<CaculatorResultWay>();
+	    	int i = 1;
+	    	while( i<6 ){
+	    		
+	    		CaculatorResultWay way = doSingleCaculate(param);
+	    		if( way == null){
+	    			break;
+	    		}
+	    		i++;
+	    		rtnlist.add(way);
+	    	}
+	    	return rtnlist;
+	    	
+		}
+	    
+		private CaculatorResultWay doSingleCaculate( CaculatorParam param ) {
+	    	
 	    	String aendid = param.getAend();
 	    	String zendid = param.getZend();
 	    	List<String> aendme = param.getAendme();
 	    	List<String> zendme = param.getZendme();
 	    	
-	    	List<CaculatorResultWay> mainRoute =  dijkstra( aendid, zendid, aendme , zendme ,param ) ;
+	    	CaculatorResultWay  mainRoute =  dijkstra( aendid, zendid, aendme , zendme ,param ) ;
 	    	if(mainRoute==null){
 	    		return null;
 	    	}
-	    	rtnlist.addAll(mainRoute);
 	    	
-	    	//找到主用路径后，删除中间节点的关系，再次查找。
-	    	for (int i = 0; i < mainRoute.size(); i++) {
-	    		CaculatorResultWay way = mainRoute.get(i);
-	    		LinkedList<CaculatorResultWayRoute>  sway  = way.getRouts();
-	    		for (int j = 1; j < sway.size()-1; j++) {
-	    			String nodeid = sway.get(j).getNodeid();
-	    			Integer nodeindex = (Integer)pointMap.get(nodeid);
-	    			//matrix中，这个节点全部链路删除
-	    	    	int size = matrix.length;
-	    	    	for (int k = 0; k < size; k++) {
-	    	    		for (int l = 0; l < size; l++) {
-	    	    			if( k==nodeindex.intValue() || l== nodeindex.intValue()){
-	    	    				matrix[k][l] = null;
-	    	    				matrix[l][k] = null;
-	    	    			}
-	    	    		}
-	    			}
-				}
+	    	LinkedList<CaculatorResultWayRoute>  sway  = mainRoute.getRouts();
+	    	for (int j = 1; j < sway.size()-1; j++) {
+	    		String nodeid = sway.get(j).getNodeid();
+	    		Integer nodeindex = (Integer)pointMap.get(nodeid);
+	    		//matrix中，这个节点全部链路删除
+	    	   	int size = matrix.length;
+	    	   	for (int k = 0; k < size; k++) {
+	    	  		for (int l = 0; l < size; l++) {
+	    	   			if( k==nodeindex.intValue() || l== nodeindex.intValue()){
+	    	   				matrix[k][l] = null;
+	    	   				matrix[l][k] = null;
+	    	   			}
+	    	   		}
+	    		}
 			}
 	    	
 	    	
@@ -91,13 +103,9 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	distanceMap.clear();
 	    	path.clear();
 	    	
-	    	List<CaculatorResultWay> bakRoute =  dijkstra( aendid, zendid, aendme , zendme ,param ) ;
-	    	if(bakRoute!=null){
-	    		rtnlist.addAll(bakRoute);
-	    	}
 	    	
 	    	
-	    	return rtnlist;
+	    	return mainRoute;
 	    	
 		}
 
@@ -378,7 +386,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	return matrix[aendindex][zendindex].getMinWeightLink(policy);
 	    }
 	    
-		private List<CaculatorResultWay> dijkstra(String aendid, String zendid, List<String> aendme , List<String> zendme, CaculatorParam param) {
+		private  CaculatorResultWay  dijkstra(String aendid, String zendid, List<String> aendme , List<String> zendme, CaculatorParam param) {
 			   
 			//起始点的序号
 			Integer startindex = (Integer)pointMap.get(aendid);
@@ -471,7 +479,6 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	            return null ; 
 	        }
 			
-	        List<CaculatorResultWay> ways = new ArrayList<CaculatorResultWay>();
 	        List<Integer> alllist =  path.get(zendindex);
        	    	   
        	    CaculatorResultWay way = new CaculatorResultWay();
@@ -519,9 +526,8 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
         		way.getRouts().add(route);
        	    }
        	    	   
-       	    ways.add(way);
 		       
-       		return ways ;
+       		return way ;
 		       
 		}
 		

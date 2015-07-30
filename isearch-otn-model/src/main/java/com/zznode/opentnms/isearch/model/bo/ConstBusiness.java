@@ -180,6 +180,14 @@ public class ConstBusiness {
 			return odu4 ; 
 		}
 		
+		p = Pattern.compile(".*/och=(\\d*)", Pattern.CASE_INSENSITIVE);
+		m = p.matcher(ctp);
+		if( m.matches()  ){
+			OCH och = new OCH();
+			och.setIndex(Integer.valueOf(m.group(1)));
+			return och ; 
+		}
+		
 		return null ;
 	}
 

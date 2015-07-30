@@ -31,8 +31,6 @@ pid=`cat $FILE_PID | awk '{print $1}'`
 if [ "${pid}" != "" ]
 then
     kill -15 $pid
-    sleep 10
-    ps -ef|grep D$PROCESSOR_NAME|grep -v grep |awk '{print "kill -9 " $2}'|sh
 fi
 echo "old pid is $pid"
 
