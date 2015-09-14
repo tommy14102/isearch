@@ -3,11 +3,13 @@ package com.zznode.opentnms.isearch.otnRouteService.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -57,6 +59,8 @@ public class BusiAnalyser {
 	
 	private Map<String,List<DbWdmSncAll>> emsDataMap = new HashMap<String,List<DbWdmSncAll>>();
 	
+	private  Map<String,List<DbWdmSncAll>> ochData = new HashMap<String,List<DbWdmSncAll>>();
+	
 	public BusiAnalyser(){
 	}
 	
@@ -89,6 +93,7 @@ public class BusiAnalyser {
 	private void queryZdWmdsnc(String emsid) {
 		
 		emsDataMap = resourceManager.getZdWmdsnc(emsid);
+		ochData = resourceManager.getAllOch(emsid);
 	}
 
 	public void analyseAllBusi() throws Exception {
@@ -181,9 +186,6 @@ public class BusiAnalyser {
 	  	}
 	  	logger.info( "单向波道数量:" + wdmsnclist.size() );
 	  	
-	  	if(true){
-			return new ArrayList<ZdResult>();
-		}
 		
 	  	
 	  	//2.查询两个站点之间的正向双向波道。
@@ -1128,7 +1130,7 @@ public class BusiAnalyser {
 	}
 	
 
-	private List<DSR> dealClient(  DbWdmSncAll wdmsnc, List<DbWdmSncAll> wdmsncClientResult ){
+	private List<DSR> dealClient(  DbWdmSncAll wdmsnc,  ODU ori_odu, List<DbWdmSncAll> wdmsncClientResult ){
 		
 		List<DSR> rtnlist = new ArrayList<DSR>();
 
@@ -1140,7 +1142,13 @@ public class BusiAnalyser {
 					ODU odu = wdmsncin.getOdu();
 					if( odu instanceof DSR){
 						wdmsncin.setIsCaculatedBid(Boolean.TRUE);
-						rtnlist.add((DSR)odu);
+						DSR dsr = (DSR)odu;
+						rtnlist.add(dsr);
+						
+						if( ori_odu instanceof OCH ){
+							OCH och = (OCH)ori_odu ; 
+							dsr.assignOchSncid(och.getOchSncid());
+						}
 					}
 					else{
 						logger.error("关联下层数据0，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
@@ -1152,7 +1160,14 @@ public class BusiAnalyser {
 					ODU odu = wdmsncin.getOdu();
 					if( odu instanceof DSR){
 						wdmsncin.setIsCaculatedReverse(Boolean.TRUE);
-						rtnlist.add((DSR)odu);
+						DSR dsr = (DSR)odu;
+						rtnlist.add(dsr);
+						
+						if( ori_odu instanceof OCH ){
+							OCH och = (OCH)ori_odu ; 
+							dsr.assignOchSncid(och.getOchSncid());
+						}
+						
 					}
 					else{
 						logger.error("关联下层数据0，转换异常,oduc:" + odu.getClass().getSimpleName() + ",sncid:"+ wdmsncin.getObjectId());
@@ -1166,6 +1181,7 @@ public class BusiAnalyser {
 	
 	private void dealPassedRouts( ODU odu , ODU passedOdu ){
 		
+				
 		List<DSR> dsrlist = null;
 		List<ODU0> odu0list = null;
 		List<ODU1> odu1list = null;
@@ -1202,9 +1218,11 @@ public class BusiAnalyser {
 			odu1list = och.getOdu1list();
 			odu2list = och.getOdu2list();
 			odu3list = och.getOdu3list();
+			
+			//isOch = true; 
+			//passedOdu.setOchSncid(och.getOchSncid());
+			passedOdu.assignOchSncid(och.getOchSncid());
 		}
-		
-		
 		
 		if( passedOdu instanceof ODU0){
 			ODU0 odu0 = (ODU0)passedOdu;
@@ -1561,8 +1579,8 @@ public class BusiAnalyser {
 			if( !wdmsncin.getIsCaculatedBid() && wdmsncin.getPassedPtplist().contains(wdmsnc.getHeadptpStr()) ){
 				ODU odu = wdmsncin.getOdu();
 				if( odu instanceof ODU4){
-					rtnlist.add((ODU4)odu);
-					wdmsncin.setIsCaculatedBid(Boolean.TRUE);
+					ODU4 odu4 = (ODU4)odu;
+					rtnlist.add(odu4);
 					dealPassedRouts(ori_odu, odu);
 				}
 				else{
@@ -1601,34 +1619,43 @@ public class BusiAnalyser {
 		
 		logger.info("start Analyser::" + aendZDid +" ---" + zendZDid);
 		
+		Set<String> dealedSet = new HashSet<String>();
+		
 		List wdmsnclist = new ArrayList<DbWdmSncAll>();
 		
 		//1.查询两个站点之间的正向单向波道。
 		String key = aendZDid + "|" + zendZDid ;
+		//String key = aendZDid  ;
 		List<DbWdmSncAll> wdmsnclistTp =  emsDataMap.get(key);
 		if( wdmsnclistTp!=null){
 			logger.info( "正向波道数量:" + wdmsnclistTp.size() );
 			for (Iterator<DbWdmSncAll> iter = wdmsnclistTp.iterator(); iter.hasNext();) {
 				DbWdmSncAll wdmsnc = iter.next();
 				
-				
-		  		List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"0");
-		    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
-		    		iter.remove() ; 
-		    		logger.info( "正向波道无路由，舍弃:" + wdmsnc.getObjectId() );
-		    		continue ;
-		    	}
+				if(wdmsnc.getIsReverse().equals(Boolean.FALSE) && wdmsnc.getWdmsncroutelist().size()>0){
+					
+				}
+				else{
+					List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"0");
+			    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
+			    		iter.remove() ; 
+			    		logger.info( "正向波道无路由，舍弃:" + wdmsnc.getObjectId() );
+			    		continue ;
+			    	}
+			    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
+				}
 		    	
-		    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
 		    	wdmsnc.setIsReverse(Boolean.FALSE);
 		    	wdmsnc.setIsCaculatedBid(Boolean.FALSE);
 		    	wdmsnc.setIsCaculatedReverse(Boolean.FALSE);
 		    	wdmsnclist.add(wdmsnc);
+		    	dealedSet.add(wdmsnc.getObjectId());
 		  	}
 		} 
 		
 	  	//2.查询反向波道
 		String keyReverse = zendZDid + "|" + aendZDid ;
+		//String keyReverse = zendZDid  ;
 		List<DbWdmSncAll> sncReverselist =  emsDataMap.get(keyReverse);
 		if(sncReverselist!=null){
 			logger.info( "反向波道数量:" + sncReverselist.size() );
@@ -1636,30 +1663,35 @@ public class BusiAnalyser {
 		  	for (Iterator<DbWdmSncAll> iter = sncReverselist.iterator(); iter.hasNext();) {
 		  		DbWdmSncAll wdmsnc = iter.next();
 		  		
-		  		if( wdmsnc.getDirection().intValue() == 0 ){
+		  		if(  !ConstBusiness.rateDescMap.keySet().contains(wdmsnc.getRate() ) && wdmsnc.getDirection().intValue() == 0 ){
 		  			//单向舍弃
 		  			iter.remove() ; 
 		    		logger.info( "反向波道为单向路由，舍弃:" + wdmsnc.getObjectId() );
 		    		continue ;
 		  		}
-		  		
-		  		List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"1");
-		    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
-		    		iter.remove() ; 
-		    		logger.info( "反向波道无路由，舍弃:" + wdmsnc.getObjectId() );
+		  		if( dealedSet.contains(wdmsnc.getObjectId())){
+		  			//iter.remove() ; 
+		    		logger.info( "正向数据已包括，舍弃:" + wdmsnc.getObjectId() );
 		    		continue ;
-		    	}
-		    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
+		  		}
+		  		
+		  		if(wdmsnc.getIsReverse().equals(Boolean.TRUE) && wdmsnc.getWdmsncroutelist().size()>0){
+					
+				}
+				else{
+					List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"1");
+			    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
+			    		iter.remove() ; 
+			    		logger.info( "反向波道无路由，舍弃:" + wdmsnc.getObjectId() );
+			    		continue ;
+			    	}
+			    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
+				}
+		  		
 		    	wdmsnc.setIsReverse(Boolean.TRUE);
 		    	wdmsnc.setIsCaculatedBid(Boolean.FALSE);
 		    	wdmsnc.setIsCaculatedReverse(Boolean.FALSE);
 		    	wdmsnclist.add(wdmsnc);
-		    	
-		    	/**
-		    	if(wdmsnc.getObjectId().equals("UUID:b545d64c-210a-11e4-9365-005056862639")){
-					System.out.println("why1");
-				}
-				*/
 		    	
 		  	}
 		}
@@ -1669,6 +1701,19 @@ public class BusiAnalyser {
 		}
 		else{
 			logger.info( "波道总数量:" + wdmsnclist.size() );
+		}
+		
+		
+		List<DbWdmSncAll> ochlist = ochData.get(aendZDid);
+		
+		if( ochlist!=null && ochlist.size()>0){
+			logger.info( "och波道数量:" + ochlist.size() );
+			for (int i = 0; i < ochlist.size(); i++) {
+				DbWdmSncAll dbWdmSncAll = ochlist.get(i);
+				dbWdmSncAll.setIsCaculatedBid(Boolean.FALSE);
+				dbWdmSncAll.setIsCaculatedReverse(Boolean.FALSE);
+				wdmsnclist.add(dbWdmSncAll);
+			}
 		}
 		
 	  	//5.循环所有波道，分析oduk的承载关系
@@ -1722,7 +1767,7 @@ public class BusiAnalyser {
 		    for (int j = 0; j < wdmsnc.getWdmsncroutelist().size(); j++) {
 		    	WdmSncRoute route = wdmsnc.getWdmsncroutelist().get(j);
 		    	if( mCardmodel.contains(route.acardmodel)){
-		    		break;
+		    		//break;
 		    	}
 		    	String ptpStr = route.m_AEndMeObjectId + "|" + route.m_AEndPtpObjectId ; 
 		    	wdmsnc.getPassedPtplist().add(ptpStr);
@@ -1742,10 +1787,6 @@ public class BusiAnalyser {
 	  	//7.划分各层数据
 	  	for (Iterator<DbWdmSncAll> iter = wdmsnclist.iterator(); iter.hasNext();) {
 	  		DbWdmSncAll wdmsnc = iter.next();
-	  		
-	  		if( wdmsnc.getObjectId().equals("UUID:51655b3b-10da-11e5-9c2d-005056862639")){
-	  			System.out.println(1234);
-	  		}
 	  		
 			if( !wdmsnc.getLayerdesc().equals( Rate.och.getName()) ){
 				
@@ -1856,7 +1897,7 @@ public class BusiAnalyser {
 	    for (int i = 0; i < wdmsncOdu0Result.size(); i++) {
 	    	DbWdmSncAll wdmsnc = wdmsncOdu0Result.get(i);
 	    	ODU0 odu0 = (ODU0)wdmsnc.getOdu();   
-	    	List<DSR> dsrlist = dealClient( wdmsnc, wdmsncClientResult );
+	    	List<DSR> dsrlist = dealClient( wdmsnc,odu0, wdmsncClientResult );
 	    	if( dsrlist.size()>0 ){
 	    		odu0.setDsr(dsrlist.get(0));
 	    	}
@@ -1866,7 +1907,7 @@ public class BusiAnalyser {
 	    for (int i = 0; i < wdmsncOdu1Result.size(); i++) {
 	    	DbWdmSncAll wdmsnc = wdmsncOdu1Result.get(i);
 			ODU1 odu1 = (ODU1)wdmsnc.getOdu();  
-			List<DSR> dsrlist = dealClient( wdmsnc, wdmsncClientResult );
+			List<DSR> dsrlist = dealClient( wdmsnc, odu1,wdmsncClientResult );
 			odu1.setDsrlist(dsrlist);
 			
 			List<ODU0> odu0list = dealOdu0(wdmsnc ,odu1, wdmsncOdu0Result);
@@ -1878,7 +1919,7 @@ public class BusiAnalyser {
 	    for (int i = 0; i < wdmsncOdu2Result.size(); i++) {
 	    	DbWdmSncAll wdmsnc = wdmsncOdu2Result.get(i);
 	    	ODU2 odu2 = (ODU2)wdmsnc.getOdu();  
-	    	List<DSR> dsrlist = dealClient( wdmsnc, wdmsncClientResult );
+	    	List<DSR> dsrlist = dealClient( wdmsnc, odu2, wdmsncClientResult );
 	    	odu2.setDsrlist(dsrlist);
 			
 			List<ODU0> odu0list = dealOdu0(wdmsnc ,odu2, wdmsncOdu0Result);
@@ -1893,7 +1934,7 @@ public class BusiAnalyser {
 	    for (int i = 0; i < wdmsncOdu3Result.size(); i++) {
 	    	DbWdmSncAll wdmsnc = wdmsncOdu3Result.get(i);
 	    	ODU3 odu3 = (ODU3)wdmsnc.getOdu(); 
-	    	List<DSR> dsrlist = dealClient( wdmsnc, wdmsncClientResult );
+	    	List<DSR> dsrlist = dealClient( wdmsnc, odu3,wdmsncClientResult );
 	    	odu3.setDsrlist(dsrlist);
 			
 			List<ODU0> odu0list = dealOdu0(wdmsnc ,odu3, wdmsncOdu0Result);
@@ -1910,7 +1951,7 @@ public class BusiAnalyser {
 	    for (int i = 0; i < wdmsncOdu4Result.size(); i++) {
 	    	DbWdmSncAll wdmsnc = wdmsncOdu4Result.get(i);
 	    	ODU4 odu4 = (ODU4)wdmsnc.getOdu();  
-	    	List<DSR> dsrlist = dealClient( wdmsnc, wdmsncClientResult );
+	    	List<DSR> dsrlist = dealClient( wdmsnc, odu4,wdmsncClientResult );
 	    	odu4.setDsrlist(dsrlist);
 			
 			List<ODU0> odu0list = dealOdu0(wdmsnc ,odu4, wdmsncOdu0Result);
@@ -1930,9 +1971,10 @@ public class BusiAnalyser {
 	    for (int i = 0; i < wdmsncOchResult.size(); i++) {
 	    	DbWdmSncAll wdmsnc = wdmsncOchResult.get(i);
 	    	OCH och = new OCH();
+	    	och.setOchSncid(wdmsnc.getObjectId());
 	    	wdmsnc.setOdu(och);
 	    	
-	    	List<DSR> dsrlist = dealClient( wdmsnc, wdmsncClientResult );
+	    	List<DSR> dsrlist = dealClient( wdmsnc,och, wdmsncClientResult );
 	    	och.setDsrlist(dsrlist);
 			
 			List<ODU0> odu0list = dealOdu0(wdmsnc ,och, wdmsncOdu0Result);
@@ -1949,8 +1991,6 @@ public class BusiAnalyser {
 			
 			List<ODU4> odu4list = dealOdu4(wdmsnc ,och, wdmsncOdu4Result);
 			och.setOdu4list(odu4list);
-			
-	    	
 	    }
 
 	    List<DbWdmSncAll> wdmsncAllResult = new ArrayList<DbWdmSncAll>();
@@ -1963,6 +2003,7 @@ public class BusiAnalyser {
 	    wdmsncAllResult.addAll(wdmsncOchResult);
 	  	
 	    logger.info("wdmsncAllResult info::" + wdmsncAllResult.size());
+	    logger.info("wdmsncOchResult info::" + wdmsncOchResult.size());
 	    
 	    
 	    //14.整合查询结果
@@ -1975,6 +2016,27 @@ public class BusiAnalyser {
 	  			//wdmsnc.setIsReverse(Boolean.FALSE);
 	  			//continue ;
 	  		}
+	  		
+	  		if (wdmsnc.getOdu()  instanceof OCH) {
+	    		//logger.info("och info::" + wdmsnc);
+	    		continue ; 
+			} 
+	  		
+	  		/**
+	  		if( wdmsnc.isReverse ){
+	  			if(!wdmsnc.getZendjz().equals(aendZDid)){
+	  				logger.info("isReverse aendZDid not same::" + wdmsnc.getObjectId());
+		  			continue ;
+	  			}
+	  		}else{
+	  			if(!wdmsnc.getZendjz().equals(zendZDid)){
+	  				logger.info("isReverse zendZDid not same::" + wdmsnc.getObjectId());
+		  			continue ;
+	  			}
+	  		}
+	  		*/
+	  		
+	  		
 	  		ZdResult zdResult = new ZdResult();
 	  		zdResult.setLayerdesc( wdmsnc.getLayerdesc() );
 	    	zdResult.setRate( wdmsnc.getRate()+"");
@@ -1983,6 +2045,10 @@ public class BusiAnalyser {
 	    	zdResult.setSncname( wdmsnc.getSncName() );
 	    	zdResult.setOdu( wdmsnc.getOdu());
 	    	zdResult.setDirection(wdmsnc.getDirection());
+	    	zdResult.setPassedPtplist(wdmsnc.getPassedPtplist());
+	    	zdResult.setHeadptpStr(wdmsnc.getHeadptpStr());
+	    	
+	    	
 	    	
 	    	LinkedHashMap<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
 	    	
