@@ -33,7 +33,7 @@
 				<property name="compressionThreshold" value="1024" />
 			</bean>
 		</property>
-		<property name="opTimeout" value="1000" />
+		<property name="opTimeout" value="5000" />
 		<property name="timeoutExceptionThreshold" value="1998" />
 		<property name="locatorType" value="CONSISTENT" />
 		<property name="failureMode" value="Redistribute" />
@@ -48,7 +48,7 @@
 				<property name="compressionThreshold" value="1024" />
 			</bean>
 		</property>
-		<property name="opTimeout" value="1000" />
+		<property name="opTimeout" value="5000" />
 		<property name="timeoutExceptionThreshold" value="1998" />
 		<property name="locatorType" value="CONSISTENT" />
 		<property name="failureMode" value="Redistribute" />
