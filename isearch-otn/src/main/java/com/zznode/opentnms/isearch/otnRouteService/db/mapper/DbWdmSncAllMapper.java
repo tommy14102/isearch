@@ -31,7 +31,7 @@ public class DbWdmSncAllMapper implements RowMapper<DbWdmSncAll> {
         wdmSnc.serviceState      =resultset.getInt("ServiceState");
         wdmSnc.rateDesc          =resultset.getString("RateDesc");
         wdmSnc.sncType           =resultset.getString("SncType");
-        wdmSnc.ratedesc          =resultset.getString("cmRateDesc");
+        //wdmSnc.ratedesc          =resultset.getString("cmRateDesc");
         
 		return wdmSnc  ; 
 		

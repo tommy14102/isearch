@@ -161,10 +161,17 @@ public class CachedClient {
 	 * @param exp
 	 * @param o
 	 * @return
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
 	 * @throws BaseServiceException 
 	 */
-	public void set(String key, int exp, Object o) {
-		primaryMemcachedClient.set(key , exp, o);
+	public void set(String key, int exp, Object o) throws InterruptedException, ExecutionException {
+		
+		 Future<Boolean> rtn = primaryMemcachedClient.set(key , exp, o);
+		 while(!rtn.isDone()){
+			 
+		 }
+		 System.out.println("set result:" + rtn.get());
 	}
 	
 	public void setByVersion(String key, int exp, Object o) {

@@ -20,8 +20,15 @@ public class DbMeParentExtractor implements ResultSetExtractor<Map<String,String
 		Map<String,String> meParentMap = new HashMap<String,String>();
 		while(rs.next())
 		{
+			String meobjectid = rs.getString( "objectId") ; 
+			String parentmeid = rs.getString( "parentmeobjectid") ; 
+			if( parentmeid==null || parentmeid.length()==0 ){
+				meParentMap.put( meobjectid , meobjectid );
+			}
+			else{
+				meParentMap.put(meobjectid, parentmeid);
+			}
 			
-			meParentMap.put(rs.getString( "objectId"), rs.getString( "parentmeobjectid"));
 			
 		}
 		return meParentMap; 

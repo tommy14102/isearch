@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType( propOrder = {"sncid", "freeOdu", "layerDesc","zdCountInSnc","direction","route" })
+@XmlType( propOrder = {"sncid","ochsncid", "freeOdu", "layerDesc","zdCountInSnc","direction","route" })
 public class RouteCalculationResultRouteWrapper {
 
 	private String freeOdu;
@@ -12,10 +12,19 @@ public class RouteCalculationResultRouteWrapper {
 	private String sncid;
 	private String layerDesc;
 	private Integer direction;
+	private String ochsncid;
 	
 	private ArrayList<RouteCalculationResultRoute> route = new ArrayList<RouteCalculationResultRoute>() ;
 
 	
+	public String getOchsncid() {
+		return ochsncid;
+	}
+
+	public void setOchsncid(String ochsncid) {
+		this.ochsncid = ochsncid;
+	}
+
 	public Integer getDirection() {
 		return direction;
 	}

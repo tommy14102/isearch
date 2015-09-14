@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
@@ -27,14 +28,46 @@ public class DbWdmSncZdExtractor implements ResultSetExtractor<Map<String,List<D
 			
 			DbWdmSncAll wdmSnc = new DbWdmSncAll();
 			wdmSnc.objectId = rs.getString( "objectId");
-			wdmSnc.direction =rs.getInt   ("direction");      
+			wdmSnc.direction =rs.getInt("direction");      
 	        wdmSnc.sncName =rs.getString("sncname");        
-	        wdmSnc.rate =rs.getInt   ("rate");  
+	        wdmSnc.rate =rs.getInt("rate");  
 	        wdmSnc.setAendjz( rs.getString("ajuzhan") );
 	        wdmSnc.setZendjz( rs.getString("zjuzhan") );
 	        
 	        System.out.println("处理第"+i++ +"条snc数据:" + wdmSnc.objectId);
 	        
+	        /**
+	         * 
+	        String keyAend = wdmSnc.getAendjz()  ;
+	        
+	        if( emsDataMap.containsKey(keyAend) ){
+				emsDataMap.get(keyAend).add(wdmSnc);
+			}
+			else{
+				List<DbWdmSncAll> snclist = new ArrayList<DbWdmSncAll>();
+				snclist.add(wdmSnc);
+				emsDataMap.put(keyAend, snclist);
+			}
+	        
+	        
+	        DbWdmSncAll wdmSncReverse = new DbWdmSncAll();
+	        BeanUtils.copyProperties(wdmSnc, wdmSncReverse);
+	        wdmSncReverse.setAendjz( wdmSnc.getZendjz() );
+	        wdmSncReverse.setZendjz( wdmSnc.getAendjz() );
+	        
+	        
+	        String keyZend =   wdmSncReverse.getAendjz() ;
+	        
+	        if( emsDataMap.containsKey(keyZend) ){
+				emsDataMap.get(keyZend).add(wdmSncReverse);
+			}
+			else{
+				List<DbWdmSncAll> snclist = new ArrayList<DbWdmSncAll>();
+				snclist.add(wdmSncReverse);
+				emsDataMap.put(keyZend, snclist);
+			}
+			*/
+			
 	        String key = wdmSnc.getAendjz() + "|" + wdmSnc.getZendjz() ;
 	        
 	        if( emsDataMap.containsKey(key) ){

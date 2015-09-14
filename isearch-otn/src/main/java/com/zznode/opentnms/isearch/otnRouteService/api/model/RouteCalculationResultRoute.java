@@ -13,7 +13,15 @@ public class RouteCalculationResultRoute {
 	private String zendportname;
 	private String ztimeSlots;
 	private String additionalInfo;
+	private String routeType;
 	
+	
+	public String getRouteType() {
+		return routeType;
+	}
+	public void setRouteType(String routeType) {
+		this.routeType = routeType;
+	}
 	public String getAendmeobjectid() {
 		return aendmeobjectid;
 	}

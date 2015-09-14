@@ -28,8 +28,6 @@ public class Main {
 	
 	public static void start() throws Exception{
 		
-		routeAnalyser.analyseAllRoute();
-		
 		//1.根据配置重新加载所有topo资源
 		if(PropertiesHander.getProperty("needRefreshTopo").equals("true")){
 			routeAnalyser.analyseAllRoute();
