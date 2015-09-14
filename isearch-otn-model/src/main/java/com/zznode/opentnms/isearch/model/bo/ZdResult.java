@@ -1,8 +1,12 @@
 package com.zznode.opentnms.isearch.model.bo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class ZdResult implements Serializable{
@@ -18,8 +22,84 @@ public class ZdResult implements Serializable{
 	private ODU odu ; 
 	private String layerdesc ;
 	private Integer direction ; 
+	private String ctpStr ="";
+	private String headctpStr ="";
+	
+	private ZdResultSingle headZl = null;
+	private ZdResultSingle headXl = null;
+	private ZdResultSingle tailZl = null;
+	private ZdResultSingle tailXl = null;
+	
+	private String headme ="";
+	private String trailme ="";
+	
+	public List<String> passedPtplist = new ArrayList<String>();
+	public String headptpStr = "" ; 
+	public String storeKey = "" ;
 	
 	private LinkedHashMap<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
+
+	
+	public LinkedList<ZdResultSingle> getFirstZdRoute(){
+		Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+		Iterator<LinkedList<ZdResultSingle>> iter = allzd.iterator(); 
+		iter.hasNext();
+		LinkedList<ZdResultSingle> singleResult =  iter.next();
+		return singleResult;
+	}
+	
+	public String getLastMe(){
+		LinkedList<ZdResultSingle> singleResult = null ;
+		Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+		Iterator<LinkedList<ZdResultSingle>> iter = allzd.iterator(); 
+		while(iter.hasNext()){
+			singleResult =  iter.next();
+		}
+		
+		return singleResult.getLast().getZendmeid();
+	}
+	
+	public String getStoreKey() {
+		return storeKey;
+	}
+
+	public void setStoreKey(String storeKey) {
+		this.storeKey = storeKey;
+	}
+
+	public String getHeadme() {
+		return headme;
+	}
+
+	public void setHeadme(String headme) {
+		this.headme = headme;
+	}
+
+	public String getTrailme() {
+		return trailme;
+	}
+
+	public List<String> getPassedPtplist() {
+		return passedPtplist;
+	}
+
+	public void setPassedPtplist(List<String> passedPtplist) {
+		this.passedPtplist = passedPtplist;
+	}
+
+	public String getHeadptpStr() {
+		return headptpStr;
+	}
+
+	public void setHeadptpStr(String headptpStr) {
+		this.headptpStr = headptpStr;
+	}
+
+	public void setTrailme(String trailme) {
+		this.trailme = trailme;
+	}
+
+
 
 	public String getODUinfo( Integer rate ){
 		
@@ -143,15 +223,30 @@ public class ZdResult implements Serializable{
 		this.cucirtid = cucirtid;
 	}
 	
+	
+
+	public String getCtpStr() {
+		return ctpStr;
+	}
+
+
+
+	public void setCtpStr(String ctpStr) {
+		this.ctpStr = ctpStr;
+	}
+
+
 
 	@Override
 	public String toString() {
 		
 		StringBuilder sb = new StringBuilder();
+		sb.append(" ZdResult [headme:" + this.getFirstZdRoute().getFirst().getAendmeid() + ", tailme:" + this.getLastMe() + "]").append("\r\n");
 		sb.append(" ZdResult [rate:" + rate + ", ratedesc:" + ratedesc + "]").append("\r\n");
 		sb.append(" ZdResult [sncid:" + sncid + ", sncname:" + sncname + "]").append("\r\n");
 		sb.append(" ZdResult [oduType:" + odu.getClass().getSimpleName() + "]").append("\r\n");
 		sb.append(" ZdResult [oduIndex:" + odu.getIndex() + "]").append("\r\n");
+		sb.append(" ZdResult [ochsndic:" + this.getOdu().getOchSncid() + "]").append("\r\n");
 		if( odu instanceof DSR){
 			DSR dsr = (DSR)odu;
 			sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
@@ -282,6 +377,62 @@ public class ZdResult implements Serializable{
 		
 		return sb.toString() ;
 		
+	}
+
+
+
+	public ZdResultSingle getHeadZl() {
+		return headZl;
+	}
+
+
+
+	public void setHeadZl(ZdResultSingle headZl) {
+		this.headZl = headZl;
+	}
+
+
+
+	public ZdResultSingle getHeadXl() {
+		return headXl;
+	}
+
+
+
+	public void setHeadXl(ZdResultSingle headXl) {
+		this.headXl = headXl;
+	}
+
+
+
+	public ZdResultSingle getTailZl() {
+		return tailZl;
+	}
+
+
+
+	public void setTailZl(ZdResultSingle tailZl) {
+		this.tailZl = tailZl;
+	}
+
+
+
+	public ZdResultSingle getTailXl() {
+		return tailXl;
+	}
+
+
+
+	public void setTailXl(ZdResultSingle tailXl) {
+		this.tailXl = tailXl;
+	}
+
+	public String getHeadctpStr() {
+		return headctpStr;
+	}
+
+	public void setHeadctpStr(String headctpStr) {
+		this.headctpStr = headctpStr;
 	}
 
 	 

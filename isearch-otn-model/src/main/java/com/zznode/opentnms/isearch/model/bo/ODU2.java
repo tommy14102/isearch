@@ -18,6 +18,19 @@ public class ODU2 extends ODU{
 	
 	private List<ODU1> odu1list = new ArrayList<ODU1>() ;
 	
+	
+	public void assignOchSncid(String ochsncobjectid){
+		this.setOchSncid(ochsncobjectid);
+		for (int i = 0; i < dsrlist.size(); i++) {
+			dsrlist.get(i).assignOchSncid(ochsncobjectid);
+		}
+		for (int i = 0; i < odu0list.size(); i++) {
+			odu0list.get(i).assignOchSncid(ochsncobjectid);
+		}
+		for (int i = 0; i < odu1list.size(); i++) {
+			odu1list.get(i).assignOchSncid(ochsncobjectid);
+		}
+	}
 
 	public String getFreeODU(Integer rate_i){
 		

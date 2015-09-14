@@ -17,6 +17,10 @@ public class OCH extends ODU{
 	
 	private List<ODU4> odu4list = new ArrayList<ODU4>();
 	
+	public void assignOchSncid(String ochsncobjectid){
+		this.setOchSncid(ochsncobjectid);
+	}
+	
 	//och只能接一个odu
 	public String getFreeODU(){
 		

@@ -18,6 +18,16 @@ public class ODU1 extends ODU{
 	private ODU0 odu0_1 = new ODU0();
 	private ODU0 odu0_2 = new ODU0();
 	
+	public void assignOchSncid(String ochsncobjectid){
+		this.setOchSncid(ochsncobjectid);
+		for (int i = 0; i < dsrlist.size(); i++) {
+			dsrlist.get(i).assignOchSncid(ochsncobjectid);
+		}
+		for (int i = 0; i < odu0list.size(); i++) {
+			odu0list.get(i).assignOchSncid(ochsncobjectid);
+		}
+	}
+
 	public String getFreeODU(Integer rate_i){
 		
 		Integer ratelevel = ConstBusiness.rateMap.get(rate_i);

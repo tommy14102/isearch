@@ -9,7 +9,17 @@ public class ODU implements Serializable{
 	private Integer rate ;
 	private String sncobjectid;
 	protected Integer index ;
+	private String ochSncid;
 	
+	public void assignOchSncid(String ochsncobjectid){
+	}
+	
+	public String getOchSncid() {
+		return ochSncid;
+	}
+	public void setOchSncid(String ochSncid) {
+		this.ochSncid = ochSncid;
+	}
 	protected String getFreeODU(Integer rate){
 		return null;
 	}

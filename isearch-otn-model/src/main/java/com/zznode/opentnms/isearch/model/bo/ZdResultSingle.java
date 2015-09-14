@@ -21,7 +21,14 @@ public class ZdResultSingle implements Serializable{
 	private String aendctp;
 	private String zendctp;
 	
+	private String routeType;
 	
+	public String getRouteType() {
+		return routeType;
+	}
+	public void setRouteType(String routeType) {
+		this.routeType = routeType;
+	}
 	public String getAendctp() {
 		return aendctp;
 	}

@@ -7,6 +7,10 @@ public class ODU0 extends ODU{
 
 	private DSR dsr ;
 	
+	public void assignOchSncid(String ochsncobjectid){
+		this.setOchSncid(ochsncobjectid);
+		dsr.assignOchSncid(ochsncobjectid);
+	}
 
 	public String getFreeODU(Integer rate_i){
 		Integer ratelevel = ConstBusiness.rateMap.get(rate_i);

@@ -11,6 +11,10 @@ public class DSR extends ODU{
 	
 	private Integer index ;
 	
+	public void assignOchSncid(String ochsncobjectid){
+		this.setOchSncid(ochsncobjectid);
+	}
+	
 	public String getFreeODU(Integer rate){
 		return "/dsr" + index ; 
 	}

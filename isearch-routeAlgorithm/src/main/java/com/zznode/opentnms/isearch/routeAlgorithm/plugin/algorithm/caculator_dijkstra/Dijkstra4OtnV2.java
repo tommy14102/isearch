@@ -52,10 +52,10 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    
 	    @Override
 		protected List<CaculatorResultWay> doCaculate( CaculatorParam param ) {
-	    	
+	    	int routeCount = (Integer)param.getAttrMap().get("routeCount");
 	    	List<CaculatorResultWay> rtnlist = new ArrayList<CaculatorResultWay>();
-	    	int i = 1;
-	    	while( i<6 ){
+	    	int i = 0;
+	    	while( i< routeCount ){
 	    		
 	    		CaculatorResultWay way = doSingleCaculate(param);
 	    		if( way == null){
@@ -133,6 +133,18 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	String zendptp = (String)param.getAttrMap().get("zendptp");
 	    	String zendctp = (String)param.getAttrMap().get("zendctp");
 	    	
+	    	boolean tmodel = false ; 
+	    	if(  aendindex == 1 && zendindex == 6  ){
+				System.out.println(111);
+				tmodel = true ; 
+			}
+			
+			if( aendindex == 6 && zendindex == 1  ){
+				System.out.println(222);
+				tmodel = true ; 
+			}
+			
+	    	
 	    	//必经网元
 	    	List<String> excludeMelist = (List<String>)param.getAttrMap().get("excludeMelist");
 	    	//必经端口
@@ -157,6 +169,16 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					
 					String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+ link.getLinkindex();
 					ZdResult zdResult = (ZdResult)cacheClient.get(key);
+					
+					if(tmodel){
+					if(zdResult.getSncid().equals("UUID:51681a33-10da-11e5-9c2d-005056862639") || zdResult.getSncid().equals("UUID:51686850-10da-11e5-9c2d-005056862639")){
+						
+					}
+					else{
+						iter.remove();
+						continue;
+					}
+					}
 					
 					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
@@ -202,6 +224,16 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+  link.getLinkindex();
 					ZdResult zdResult = (ZdResult)cacheClient.get(key);
 					
+					if(tmodel){
+						if(zdResult.getSncid().equals("UUID:51681a33-10da-11e5-9c2d-005056862639") || zdResult.getSncid().equals("UUID:51686850-10da-11e5-9c2d-005056862639")){
+							
+						}
+						else{
+							iter.remove();
+							continue;
+						}
+						}
+					
 					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
 					Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
@@ -240,16 +272,28 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		}
 	    	}
 	    	
+	    	/**
+	    	//如果没有毕经等信息，不再获取每条link的详细信息
+	    	if( excludeMelist.size() == 0 && excludePtplist.size() ==0 && inclusemap.size() == 0 ){
+	    		
+	    		//查询空闲资源标记
+	    		String keyFress = "OTN_RESOURECE_OTNLink_isFress" + "|" + param.getRate() + "|"  +sec.getAendNode()+"|"+sec.getZendNode() ;
+	    		String isFree = (String)cacheClient.get(keyFress);
+	    		if("true".equals(isFree)){
+	    			return matrix[aendindex][zendindex].getMinWeightLink(policy);
+	    		}
+	    	}
+	    	*/
 	    	
 	    	outer:for (Iterator<Link> iter = linklist.iterator(); iter.hasNext();) {
 	    		Link link = iter.next();
 	    		String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+  link.getLinkindex();
 	    		ZdResult zdResult = (ZdResult)cacheClient.get(key);
+	    		if( zdResult.getSncid().equals("UUID:51688f91-10da-11e5-9c2d-005056862639")){
+	    			System.out.println(234);
+	    		}
 	    		//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 	    		//判断是否有可用资源
-	    		if(zdResult.getSncid().equals("UUID:516a8b47-10da-11e5-9c2d-005056862639")  ){
-	    			System.out.println(7788);
-	    		}
 	    		if(zdResult.getODUinfo(param.getRate()).equals("")){
 	    			iter.remove();
 	    			log.debug( " 计算两点间距离 ，按资源过滤:"+ zdResult.getSncid() );
@@ -260,8 +304,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 				if( zdResult.getOdu() instanceof DSR ){
 					String sncid = zdResult.getSncid();
 					if( hasCucirtBySncid(sncid) ){
+						iter.remove();
 						log.info("计算两点间距离 ，根据客户层路径已占用过滤:" + zdResult.getSncid());
 						continue;
+					}
+					if(  !com.zznode.opentnms.isearch.routeAlgorithm.utils.PropertiesHander.getProperty("includeClientResource").equals("true")){
+						iter.remove();
+		    			log.debug( " 计算两点间距离 ，按客户层配置过滤:"+ zdResult.getSncid() );
+		    			continue ;
 					}
 				}
 	    		
@@ -395,6 +445,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 			log.info("非直达寻路计算请求：" +" aend:"+ aendid +"("+ startindex+")" );
 			log.info("非直达寻路计算请求：" +" zend:"+ zendid +"("+ zendindex+")" );
 			
+			if(  aendid.equals("16080002") && zendid.equals("16090001") ){
+				System.out.println(111);
+			}
+			
+			if( aendid.equals("16090001") && zendid.equals("16080002")  ){
+				System.out.println(222);
+			}
+			
 			closedSet.add(startindex);
 			
 	        for (int i = 0; i < matrix.length; i++) {  
@@ -498,6 +556,13 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
         			   Link link = nextSectioninfo.getLinklist().get(i);
         			   String key = "OTN_RESOURECE_OTNLink" + "|"+nextSectioninfo.getAendNode()+"|"+nextSectioninfo.getZendNode()+"|" + link.getLinkindex();
         			   ZdResult zdResult = (ZdResult)cacheClient.get( key );
+        			 
+        			   //判断是否有可用资源
+       	    			if(zdResult.getODUinfo(param.getRate()).equals("")){
+       	    				log.debug( " 计算两点间距离 ，按资源过滤le:"+ zdResult.getSncid() );
+       	    				continue ;
+       	    			}
+       	    		
         			   link.setZdResult(zdResult);
         			   if(zdResult.getOdu() instanceof DSR){
         				   route.getClientrouts().add(link);

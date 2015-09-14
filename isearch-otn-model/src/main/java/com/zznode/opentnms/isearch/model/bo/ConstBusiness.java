@@ -31,6 +31,12 @@ public class ConstBusiness {
 	public static List<Integer> odu4rateList = new ArrayList<Integer>();
 	public static List<Integer> ochrateList = new ArrayList<Integer>();
 	
+	public static String routeType_zl = "5";
+	public static String routeType_zxl = "4";
+	public static String routeType_xl = "3";
+	public static String routeType_other = "0";
+	public static String routeType_zxlwl = "1";
+	
 	
 	
 	static{
