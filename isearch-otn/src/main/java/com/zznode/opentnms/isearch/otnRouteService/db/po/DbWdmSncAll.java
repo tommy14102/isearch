@@ -42,6 +42,7 @@ public class DbWdmSncAll implements Serializable
         
         private String aendjz;
         private String zendjz;
+        private Boolean reverseAdded  = false ;
         
 		public String getAendjz() {
 			return aendjz;
@@ -226,6 +227,12 @@ public class DbWdmSncAll implements Serializable
 		}
 		public void setIsReverse(Boolean isReverse) {
 			this.isReverse = isReverse;
+		}
+		public Boolean getReverseAdded() {
+			return reverseAdded;
+		}
+		public void setReverseAdded(Boolean reverseAdded) {
+			this.reverseAdded = reverseAdded;
 		}
         
         

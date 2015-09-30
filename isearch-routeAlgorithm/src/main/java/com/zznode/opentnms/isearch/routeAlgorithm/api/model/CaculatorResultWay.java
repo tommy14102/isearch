@@ -1,14 +1,17 @@
 package com.zznode.opentnms.isearch.routeAlgorithm.api.model;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 
 public class CaculatorResultWay {
 
 	private Integer Wayseq ; 
 	private Integer routeCount ; 
 	private LinkedList<CaculatorResultWayRoute>  routs = new LinkedList<CaculatorResultWayRoute>();
+	
+	private List<Integer> passbjindex = new ArrayList<Integer>();
+	private boolean passedOK = true; 
 	
 	public Integer getWayseq() {
 		return Wayseq;
@@ -27,6 +30,20 @@ public class CaculatorResultWay {
 	}
 	public void setRouts(LinkedList<CaculatorResultWayRoute> routs) {
 		this.routs = routs;
+	}
+	public List<Integer> getPassbjindex() {
+		return passbjindex;
+	}
+	public void setPassbjindex(List<Integer> passbjindex) {
+		this.passbjindex = passbjindex;
+	}
+	
+	
+	public boolean isPassedOK() {
+		return passedOK;
+	}
+	public void setPassedOK(boolean passedOK) {
+		this.passedOK = passedOK;
 	}
 	@Override
 	public String toString() {

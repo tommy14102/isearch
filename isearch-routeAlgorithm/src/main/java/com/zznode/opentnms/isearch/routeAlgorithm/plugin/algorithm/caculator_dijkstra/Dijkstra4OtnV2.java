@@ -2,6 +2,7 @@ package com.zznode.opentnms.isearch.routeAlgorithm.plugin.algorithm.caculator_di
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,12 +34,19 @@ import com.zznode.opentnms.isearch.routeAlgorithm.api.model.otn.ExCluseBean;
 import com.zznode.opentnms.isearch.routeAlgorithm.core.algorithm.AlgorithmProcessor;
 import com.zznode.opentnms.isearch.routeAlgorithm.core.cache.SPtnMemcachedClient;
 import com.zznode.opentnms.isearch.routeAlgorithm.plugin.data.importor_dbbase.DBUtil;
+import com.zznode.opentnms.isearch.routeAlgorithm.utils.CaculatorResultWayRouteComparator;
 
 public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 
 	 private static Logger log = Logger.getLogger(Dijkstra4OtnV2.class);
 	 
 	 private SPtnMemcachedClient cacheClient = (SPtnMemcachedClient)App.factory.getBean("SPtnMemcachedClient");
+	 
+	 private boolean isReverse = false; 
+	 
+	 public Dijkstra4OtnV2(boolean isReverse){
+		 this.isReverse = isReverse ; 
+	 }
 	 
 	 private DBUtil dbClient = (DBUtil)App.factory.getBean("DBUtil");
 	    
@@ -52,6 +60,16 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    
 	    @Override
 		protected List<CaculatorResultWay> doCaculate( CaculatorParam param ) {
+	    	
+	    	//禁止网元
+	    	List<String> excludeMelist = (List<String>)param.getAttrMap().get("excludeMelist");
+	    	//禁止端口
+	    	List<String> excludePtplist = (List<String>)param.getAttrMap().get("excludePtplist");
+	    	excludeMelist = excludeMelist==null ? new ArrayList<String>() : excludeMelist ; 
+	    	excludePtplist = excludePtplist==null ? new ArrayList<String>() : excludePtplist ; 
+	    	
+	    	
+	    	
 	    	int routeCount = (Integer)param.getAttrMap().get("routeCount");
 	    	List<CaculatorResultWay> rtnlist = new ArrayList<CaculatorResultWay>();
 	    	int i = 0;
@@ -61,6 +79,12 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		if( way == null){
 	    			break;
 	    		}
+	    		
+	    		//增加必经，必不经的判断
+	    		if( !way.isPassedOK()){
+	    			 continue;
+	    		}
+	    		
 	    		i++;
 	    		rtnlist.add(way);
 	    	}
@@ -79,7 +103,6 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	if(mainRoute==null){
 	    		return null;
 	    	}
-	    	
 	    	LinkedList<CaculatorResultWayRoute>  sway  = mainRoute.getRouts();
 	    	for (int j = 1; j < sway.size()-1; j++) {
 	    		String nodeid = sway.get(j).getNodeid();
@@ -145,14 +168,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 			}
 			
 	    	
-	    	//必经网元
+	    	//禁止网元
 	    	List<String> excludeMelist = (List<String>)param.getAttrMap().get("excludeMelist");
-	    	//必经端口
+	    	//禁止端口
 	    	List<String> excludePtplist = (List<String>)param.getAttrMap().get("excludePtplist");
 	    	excludeMelist = excludeMelist==null ? new ArrayList<String>() : excludeMelist ; 
 	    	excludePtplist = excludePtplist==null ? new ArrayList<String>() : excludePtplist ; 
 	    	
-	    	//禁止点最近原则
+	    	//必经点最近原则
 	    	Map<String ,List<ExCluseBean> > inclusemap = (Map<String ,List<ExCluseBean> >)param.getAttrMap().get("inclusemap");
 	    	
 	    	Section sec = matrix[aendindex][zendindex];
@@ -175,18 +198,31 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 						
 					}
 					else{
-						iter.remove();
-						continue;
+						//iter.remove();
+						//continue;
 					}
+					}
+					
+					if(zdResult==null){
+						System.out.println(666);
+						continue;
 					}
 					
 					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
 					Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
 					
+					
 					//判断是否经过a网元
 					Iterator<LinkedList<ZdResultSingle>>  iters = allzd.iterator();
 					LinkedList<ZdResultSingle> firstelement = iters.next();
+					
+					String headptp = aendptp ; 
+					String headctp = aendctp ; 
+					if(isReverse){
+						headptp = zendptp ; 
+						headctp = zendctp ; 
+					} 
 					
 					if(	aendmelist.size()>0 && !aendmelist.contains(firstelement.getFirst().getAendmeid())){
 						iter.remove();
@@ -195,14 +231,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					}
 					
 					//判断是否经过a端口
-					if(	!StringUtils.isEmpty(aendptp) && !firstelement.getFirst().getAendptpid().equals(aendptp)){
+					if(	!StringUtils.isEmpty(headptp) && !firstelement.getFirst().getAendptpid().equals(headptp)){
 						iter.remove();
 						log.debug( " 计算两点间距离 ，按端口过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
 					//判断是否经过a时隙
-					if(	!StringUtils.isEmpty(aendctp) && !firstelement.getFirst().getAendctp().equals(aendctp)){
+					if(	!StringUtils.isEmpty(headctp) && !firstelement.getFirst().getAendctp().equals(headctp)){
 						iter.remove();
 						log.debug( " 计算两点间距离 ，按时隙过滤:"+ zdResult.getSncid() );
 						continue;
@@ -229,10 +265,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 							
 						}
 						else{
-							iter.remove();
-							continue;
+							//iter.remove();
+							//continue;
 						}
 						}
+					if(zdResult==null){
+						System.out.println(777);
+						continue;
+					}
 					
 					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
@@ -245,6 +285,13 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 						lastelement = iters.next();
 					}
 					
+					String tailptp = zendptp ; 
+					String tailctp = zendctp ; 
+					if(isReverse){
+						tailptp = aendptp ; 
+						tailptp = aendctp ; 
+					}
+					
 					if( zendmelist.size()>0 && !zendmelist.contains(lastelement.getLast().getZendmeid())){
 						iter.remove();
 						log.debug( " 计算两点间距离 ，按z网元过滤:"+ zdResult.getSncid() );
@@ -252,14 +299,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					}
 					
 					//判断是否经过z端口
-					if(	!StringUtils.isEmpty(zendptp) && !lastelement.getLast().getZendptpid().equals(zendptp)){
+					if(	!StringUtils.isEmpty(tailptp) && !lastelement.getLast().getZendptpid().equals(tailptp)){
 						iter.remove();
 						log.debug( " 计算两点间距离 ，按z端口过滤:"+ zdResult.getSncid() );
 						continue;
 					}
 					
 					//判断是否经过z时隙
-					if(	!StringUtils.isEmpty(zendctp) && !lastelement.getLast().getZendctp().equals(zendctp)){
+					if(	!StringUtils.isEmpty(tailctp) && !lastelement.getLast().getZendctp().equals(tailctp)){
 						iter.remove();
 						log.debug( " 计算两点间距离 ，按z时隙过滤:"+ zdResult.getSncid() );
 						continue;
@@ -289,6 +336,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		Link link = iter.next();
 	    		String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+  link.getLinkindex();
 	    		ZdResult zdResult = (ZdResult)cacheClient.get(key);
+	    		
+	    		if(zdResult==null){
+					System.out.println(888);
+					continue;
+				}
 	    		if( zdResult.getSncid().equals("UUID:51688f91-10da-11e5-9c2d-005056862639")){
 	    			System.out.println(234);
 	    		}
@@ -336,8 +388,14 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    			}
 	    		}
 	    		
+	    		
+	    		/**
 	    		//必经点包含在a端站点内
 	    		if( inclusemap.containsKey( sec.getAendNode())  ){
+	    			
+	    			if( "UUID:a075be63-b493-11e3-8147-0050569a75e5".equals(zdResult.getSncid())){
+	    				System.out.println(7890);
+	    			}
 	    			
 	    			Set<String> cmelist = new HashSet<String>();
 	    			Set<String> cptplist = new HashSet<String>();
@@ -382,6 +440,10 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    		//必经点包含在z端站点内
 	    		if( inclusemap.containsKey( sec.getZendNode())  ){
 	    			
+	    			if( "UUID:a075be63-b493-11e3-8147-0050569a75e5".equals(zdResult.getSncid())){
+	    				System.out.println(7890);
+	    			}
+	    			
 	    			Set<String> cmelist = new HashSet<String>();
 	    			Set<String> cptplist = new HashSet<String>();
 	    			
@@ -421,7 +483,10 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    				}
 	    			}
 	    		}
+	    		
+	    		*/
 	    	}
+	    	
 	    		
 	    	if(linklist.size()==0){
 	    		log.info( " 计算两点间距离 ，无结果返回" );
@@ -429,9 +494,9 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	}
 	    	
 	    	//如果包含必经点，那么返回最短距离
-	    	if( inclusemap.containsKey( sec.getAendNode()) ||inclusemap.containsKey( sec.getZendNode()) ){
-	    		return Long.MAX_VALUE * -1 ; 
-	    	}
+	    	//if( inclusemap.containsKey( sec.getAendNode()) ||inclusemap.containsKey( sec.getZendNode()) ){
+	    	//	return Long.MAX_VALUE * -1 ; 
+	    	//}
 	    	
 	    	return matrix[aendindex][zendindex].getMinWeightLink(policy);
 	    }
@@ -441,6 +506,10 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 			//起始点的序号
 			Integer startindex = (Integer)pointMap.get(aendid);
 			Integer zendindex = (Integer)pointMap.get(zendid) ; 
+			
+			if( startindex==null || zendindex==null){
+				return null;
+			}
 			
 			log.info("非直达寻路计算请求：" +" aend:"+ aendid +"("+ startindex+")" );
 			log.info("非直达寻路计算请求：" +" zend:"+ zendid +"("+ zendindex+")" );
@@ -543,6 +612,18 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
         	way.setWayseq(0);
         	way.setRouteCount(alllist.size());
 
+        	//必经点最近原则
+        	List<ExCluseBean> incluselist = ( List<ExCluseBean> )param.getAttrMap().get("inclusedlist");
+        	Map<String,String> meParentMap = ( Map<String,String> )param.getAttrMap().get("meParentMap");
+        	
+        	//禁止网元
+	    	List<String> excludeMelist = (List<String>)param.getAttrMap().get("excludeMelist");
+	    	//禁止端口
+	    	List<String> excludePtplist = (List<String>)param.getAttrMap().get("excludePtplist");
+	    	excludeMelist = excludeMelist==null ? new ArrayList<String>() : excludeMelist ; 
+	    	excludePtplist = excludePtplist==null ? new ArrayList<String>() : excludePtplist ; 
+	    	
+        	
        	    for (int l = 0; l < alllist.size(); l++) {
        	    	Integer nodeindex = alllist.get(l) ; 
         		CaculatorResultWayRoute route = new CaculatorResultWayRoute();
@@ -552,6 +633,7 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
         		if( l+1 < alllist.size() ){
         			
         		   Section nextSectioninfo = matrix[nodeindex][alllist.get(l+1)];
+        		   
         		   for (int i = 0; i < nextSectioninfo.getLinklist().size(); i++) {
         			   Link link = nextSectioninfo.getLinklist().get(i);
         			   String key = "OTN_RESOURECE_OTNLink" + "|"+nextSectioninfo.getAendNode()+"|"+nextSectioninfo.getZendNode()+"|" + link.getLinkindex();
@@ -562,8 +644,24 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
        	    				log.debug( " 计算两点间距离 ，按资源过滤le:"+ zdResult.getSncid() );
        	    				continue ;
        	    			}
-       	    		
-        			   link.setZdResult(zdResult);
+       	    			
+       	    			link.setZdResult(zdResult);
+       	    		 
+       	    			if(passBbj(zdResult, excludeMelist, excludePtplist, meParentMap)){
+       	    				log.debug( " 计算两点间距离 ，按资源过滤le:"+ zdResult.getSncid() );
+       	    				continue ;
+       	    			}
+       	    			
+       	    			if( passBj(zdResult, incluselist , meParentMap) ){
+       	    				route.getPassedallroutes().add(link);
+       	    				link.setPassed(Boolean.TRUE);
+       	    				way.getPassbjindex().add(l);
+       	    			}
+       	    			else{
+       	    				route.getNotpassedallroutes().add(link);
+       	    			}
+       	    			
+       	    			
         			   if(zdResult.getOdu() instanceof DSR){
         				   route.getClientrouts().add(link);
         			   }
@@ -591,7 +689,40 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
         		way.getRouts().add(route);
        	    }
        	    	   
-		       
+       	 
+       	   
+       	    //如果没有毕经信息
+       	    
+       	    way.setPassedOK(Boolean.TRUE);
+       	 
+           	for (int i = 0; i < way.getRouts().size()-1; i++) {
+               	CaculatorResultWayRoute  route = way.getRouts().get(i);
+           	   	Collections.sort(route.getPassedallroutes() , new CaculatorResultWayRouteComparator());
+           	   	Collections.sort(route.getNotpassedallroutes() , new CaculatorResultWayRouteComparator());
+           	   	if( route.getPassedallroutes().size()==0 && route.getNotpassedallroutes().size() ==0){
+           	   		way.setPassedOK(Boolean.FALSE);
+           	   	}
+           	}
+           	
+           	
+        	
+           	if( incluselist.size() > 0 ){
+           		//有必经信息，那么路由段，必须有经过这个必经点的情况
+           		boolean hasPassed = false;
+           		for (int i = 0; i < way.getRouts().size(); i++) {
+            	   	CaculatorResultWayRoute  route = way.getRouts().get(i);
+           	    	if(route.getPassedallroutes().size()>0){
+           	    		hasPassed = true ; 
+           	    		break ; 
+           	    	}
+           	     }
+           		
+           		if(!hasPassed){
+           			way.setPassedOK(Boolean.FALSE);
+           		}
+			}
+       	    
+       	    
        		return way ;
 		       
 		}
@@ -605,6 +736,77 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					
 			return !cucirtid.equals("0");
 					
+		}
+		
+		private boolean passBj( ZdResult zdResult,   List<ExCluseBean> incluselist , Map<String,String> meParentMap ){
+			if( incluselist.size()==0 ){
+				return true ; 
+			}
+			
+			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+			
+			Set<String> cmelist = new HashSet<String>();
+			Set<String> cptplist = new HashSet<String>();
+			
+			for (int i = 0; i < incluselist.size(); i++) {
+				ExCluseBean bean = incluselist.get(i);
+				if(!StringUtils.isEmpty(bean.getPtpid())){
+					cptplist.add(bean.getPtpid());
+				}
+				else{
+					cmelist.add(bean.getMeid());
+				}
+			}
+			
+			for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+				for (int i = 0; i < zdsinglelist.size(); i++) {
+					ZdResultSingle zd = zdsinglelist.get(i);
+					if( cmelist.contains( meParentMap.get( zd.getAendmeid()) )  ){
+						cmelist.remove( meParentMap.get(zd.getAendmeid()));
+					}
+					if( cmelist.contains( meParentMap.get(zd.getZendmeid()))   ){
+						cmelist.remove( meParentMap.get(zd.getZendmeid()));
+					}
+					if( cptplist.contains(zd.getAendptpid())   ){
+						cptplist.remove(zd.getAendptpid());
+					}
+					if( cptplist.contains(zd.getZendptpid())   ){
+						cptplist.remove(zd.getZendptpid());
+					}
+				}
+			}
+			
+			if(cmelist.size()>0 || cptplist.size()>0){
+				log.info( " 计算两点间距离 ，按必经点过滤:"+ zdResult.getSncid() );
+				return false;
+			}
+			
+			return true ; 
+			
+		}
+		
+		
+		private boolean passBbj( ZdResult zdResult,   List<String> excludeMelist , List<String> excludePtplist,Map<String,String> meParentMap ){
+			
+			if( excludeMelist.size()>0 || excludePtplist.size()>0 ){
+				Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+				Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+ 			
+				for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+					for (int i = 0; i < zdsinglelist.size(); i++) {
+						ZdResultSingle zd = zdsinglelist.get(i);
+						if( excludeMelist.contains( meParentMap.get(zd.getAendmeid())) || excludeMelist.contains( meParentMap.get(zd.getZendmeid())) ){
+							return true;
+						}
+						if( excludePtplist.contains(zd.getAendptpid()) || excludePtplist.contains(zd.getZendptpid()) ){
+							return true;
+						}
+					}
+				}
+			}
+			
+			return false ;
 		}
 		
 		

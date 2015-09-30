@@ -23,8 +23,11 @@ public class WdmSncRouteMapper implements RowMapper<WdmSncRoute> {
 		//copier.copy(dbwdmSncRoute, wdmSncRoute, null);
 		BeanUtils.copyProperties(dbwdmSncRoute, wdmSncRoute);
 		
-		wdmSncRoute.acardmodel = resultset.getString( "acardmodel");
-	    wdmSncRoute.zcardmodel = resultset.getString( "zcardmodel");
+		wdmSncRoute.setAcardmodel( resultset.getString( "acardmodel"));
+	    wdmSncRoute.setZcardmodel( resultset.getString( "zcardmodel"));
+	    
+	    wdmSncRoute.setAendjuzhan( resultset.getString("ajuzhan") );
+	    wdmSncRoute.setZendjuzhan( resultset.getString("zjuzhan") );
 		return wdmSncRoute  ; 
 		
 	}

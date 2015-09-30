@@ -1663,11 +1663,12 @@ public class BusiAnalyser {
 		  	for (Iterator<DbWdmSncAll> iter = sncReverselist.iterator(); iter.hasNext();) {
 		  		DbWdmSncAll wdmsnc = iter.next();
 		  		
-		  		if(  !ConstBusiness.rateDescMap.keySet().contains(wdmsnc.getRate() ) && wdmsnc.getDirection().intValue() == 0 ){
+		  		if(  wdmsnc.getDirection().intValue() == 0 ){
 		  			//单向舍弃
-		  			iter.remove() ; 
+		  			//iter.remove() ;  //不舍弃，不保存
+		  			wdmsnc.setReverseAdded(Boolean.TRUE);
 		    		logger.info( "反向波道为单向路由，舍弃:" + wdmsnc.getObjectId() );
-		    		continue ;
+		    		//continue ;
 		  		}
 		  		if( dealedSet.contains(wdmsnc.getObjectId())){
 		  			//iter.remove() ; 
@@ -1681,9 +1682,15 @@ public class BusiAnalyser {
 				else{
 					List<WdmSncRoute> wdmsncroutelist = resourceManager.queryForRoute(wdmsnc.getObjectId(),"1");
 			    	if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
-			    		iter.remove() ; 
-			    		logger.info( "反向波道无路由，舍弃:" + wdmsnc.getObjectId() );
-			    		continue ;
+			    		
+			    		if( wdmsnc.getReverseAdded()){
+			    			 wdmsncroutelist = resourceManager.queryForRouteReverse( wdmsnc.getObjectId() );
+			    		}
+			    		if( wdmsncroutelist ==null || wdmsncroutelist.size()==0){
+			    			iter.remove() ; 
+				    		logger.info( "反向波道无路由，舍弃:" + wdmsnc.getObjectId() );
+				    		continue ;
+			    		}
 			    	}
 			    	wdmsnc.setWdmsncroutelist( wdmsncroutelist );
 				}
@@ -2019,7 +2026,8 @@ public class BusiAnalyser {
 	  		
 	  		if (wdmsnc.getOdu()  instanceof OCH) {
 	    		//logger.info("och info::" + wdmsnc);
-	    		continue ; 
+	  			cachedClient.set("OCH-RESOURCE-"+ wdmsnc.getSncId(), 0, wdmsnc);
+	  			continue ; 
 			} 
 	  		
 	  		/**
@@ -2035,6 +2043,11 @@ public class BusiAnalyser {
 	  			}
 	  		}
 	  		*/
+	  		
+	  		if( wdmsnc.getReverseAdded() ){
+	  			System.out.println(7890);
+	  			continue ; 
+	  		}
 	  		
 	  		
 	  		ZdResult zdResult = new ZdResult();
@@ -2058,13 +2071,15 @@ public class BusiAnalyser {
 	    		ZdResultSingle zda = new ZdResultSingle();
 	    		zda.setAendmeid(route.m_AEndMeObjectId);
 	    		zda.setAendptpid(route.m_AEndPtpObjectId);
-	    		zda.setAendcardmodel(route.acardmodel);
+	    		zda.setAendcardmodel(route.getAcardmodel());
 	    		zda.setAendctp(route.m_AEndCtpId);
+	    		zda.setAendzdid( route.getAendjuzhan() );
 	    	  		
 	    		zda.setZendmeid(route.m_ZEndMeObjectId);
 	    		zda.setZendptpid(route.m_ZEndPtpObjectId);
-	    		zda.setZendcardmodel(route.zcardmodel);
+	    		zda.setZendcardmodel(route.getZcardmodel());
 	    		zda.setZendctp(route.m_ZEndCtpId);
+	    		zda.setZendzdid( route.getZendjuzhan());
 	    	  		
 	    		if( zdmap.get( zda.getAendzdid() )!=null ){
 	    			LinkedList<ZdResultSingle>  zdlist = zdmap.get( zda.getAendzdid() );

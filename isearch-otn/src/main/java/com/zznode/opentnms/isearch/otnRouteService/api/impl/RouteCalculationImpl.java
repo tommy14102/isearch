@@ -178,25 +178,29 @@ public class RouteCalculationImpl implements RouteCalculation{
 			//1.查询站点间的直达路径
 			List<RouteCalculationResult> resultZD = findThroughpath(input, aendzd, zendzd, aednmelist, zednmelist,false);
 			if( resultZD !=null ){
+				logger.info("resultZD,size: " + resultZD.size());
 				routeCalculationResult.addAll(resultZD);
 			}
 		 
 			//2.查询非直达的最短路径
-			List<RouteCalculationResult> resultJP = findJumpedpathV3(input, aendzd, zendzd, aednmelist, zednmelist,routeCount-routeCalculationResult.size() );
+			List<RouteCalculationResult> resultJP = findJumpedpathV3(input, aendzd, zendzd, aednmelist, zednmelist,routeCount-routeCalculationResult.size(),false );
 			if(resultJP!=null){
+				logger.info("resultJP,size: "+ resultJP.size());
 				routeCalculationResult.addAll(resultJP);
 			}
 			
 			//3查询反向路由
 			List<RouteCalculationResult> resultZDReverse = findThroughpath(input, zendzd, aendzd, zednmelist, aednmelist,true);
 			if( resultZDReverse !=null ){
+				logger.info("resultZDReverse,size: " + resultZDReverse.size());
 				routeCalculationReverseResult.addAll(resultZDReverse);
 			}
 		
 		 
 			//4.查询非直达的最短路径
-			List<RouteCalculationResult> resultJPReverse = findJumpedpathV3(input, zendzd, aendzd, zednmelist, aednmelist ,routeCount-routeCalculationReverseResult.size());
+			List<RouteCalculationResult> resultJPReverse = findJumpedpathV3(input, zendzd, aendzd, zednmelist, aednmelist ,routeCount-routeCalculationReverseResult.size(),true);
 			if( resultJPReverse!=null){
+				logger.info("resultJPReverse,size: " + resultJPReverse.size());
 				routeCalculationReverseResult.addAll( resultJPReverse );
 			}
 			
@@ -211,6 +215,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 				routeCalculationResultWrapper.add(result);
 			} 
 			
+			logger.info("total,size: " + routeCalculationResultWrapper.size());
 			output.setRouteCalculationResultWrapper(routeCalculationResultWrapper);
 			
 			return output;
@@ -250,6 +255,10 @@ public class RouteCalculationImpl implements RouteCalculation{
 		Integer startindex = (Integer)matrix.getPointMap().get(aendzd);
 		Integer zendindex = (Integer)matrix.getPointMap().get(zendzd) ; 
 		
+		if( startindex==null || zendindex==null){
+			return null;
+		}
+		
 		Section sec = sections[startindex][zendindex];
 		if(sec==null){
 			return null;
@@ -261,7 +270,13 @@ public class RouteCalculationImpl implements RouteCalculation{
 			
 			String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+ link.getLinkindex();
 			ZdResult zdResult = (ZdResult)cachedClient.get(key);
-			resultlist.add(zdResult);
+			if( zdResult==null ){
+				System.out.println(111);
+			}
+			else{
+				resultlist.add(zdResult);
+			}
+			
 		}
 		
 				
@@ -552,13 +567,21 @@ public class RouteCalculationImpl implements RouteCalculation{
 				lastelement = iter.next();
 			}
 			
-			if( !StringUtils.isEmpty(aendctp) && !firstelement.getFirst().getAendctp().equals(aendctp)){
+			String headctp = firstelement.getFirst().getAendctp();
+			String tailctp = lastelement.getLast().getZendctp();
+			if(isReverse){
+				String tmp = headctp ; 
+				headctp = tailctp ; 
+				tailctp = tmp ; 
+			}
+			
+			if( !StringUtils.isEmpty(aendctp) && !headctp.equals(aendctp)){
 				zditerator.remove();
 				logger.info("根据A端时隙过滤:" + zdResult.getSncid() + "," + zdResult.getSncname());
 				continue;
 			}
 			
-			if( !StringUtils.isEmpty(zendctp) && !lastelement.getLast().getZendctp().equals(zendctp)){
+			if( !StringUtils.isEmpty(zendctp) && !tailctp.equals(zendctp)){
 				zditerator.remove();
 				logger.info("根据Z端时隙过滤:" + zdResult.getSncid() + "," + zdResult.getSncname());
 				continue;
@@ -584,10 +607,6 @@ public class RouteCalculationImpl implements RouteCalculation{
 		for (Iterator<ZdResult> zditerator = resultlist.iterator(); zditerator.hasNext();) {
 			ZdResult zdResult =  zditerator.next();
 			
-			if(zdResult.getSncid().equals("UUID:51686843-10da-11e5-9c2d-005056862639")){
-				System.out.println(123);
-			}
-			
 			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
 			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
 			
@@ -600,13 +619,21 @@ public class RouteCalculationImpl implements RouteCalculation{
 				lastelement = iter.next();
 			}
 			
-			if( !StringUtils.isEmpty(aendptp) && !firstelement.getFirst().getAendptpid().equals(aendptp)){
+			String headptp = firstelement.getFirst().getAendptpid();
+			String tailptp = lastelement.getLast().getZendptpid();
+			if(isReverse){
+				String tmp = headptp ; 
+				headptp = tailptp ; 
+				tailptp = tmp ; 
+			}
+			
+			if( !StringUtils.isEmpty(aendptp) && !headptp.equals(aendptp)){
 				zditerator.remove();
 				logger.info("根据A端端口过滤:" + zdResult.getSncid() + "," + zdResult.getSncname());
 				continue;
 			}
 			
-			if( !StringUtils.isEmpty(zendptp) && !lastelement.getLast().getZendptpid().equals(zendptp)){
+			if( !StringUtils.isEmpty(zendptp) && !tailptp.equals(zendptp)){
 				zditerator.remove();
 				logger.info("根据Z端端口过滤:" + zdResult.getSncid() + "," + zdResult.getSncname());
 				continue;
@@ -686,6 +713,10 @@ public class RouteCalculationImpl implements RouteCalculation{
 		for (Iterator<ZdResult> zditerator = resultlist.iterator(); zditerator.hasNext();) {
 			ZdResult zdResult =  zditerator.next();
 			
+			if(zdResult==null){
+				System.out.println(000);
+				continue;
+			}
 			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
 			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
 			
@@ -927,7 +958,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 	 * @return
 	 * @throws RouteCalculationException 
 	 */
-	private  List<RouteCalculationResult> findJumpedpathV3(RouteCalculationInput input , String aendzd , String zendzd , List<String> aendmelist, List<String> zendmelist,int routeCount) throws RouteCalculationException{
+	private  List<RouteCalculationResult> findJumpedpathV3(RouteCalculationInput input , String aendzd , String zendzd , List<String> aendmelist, List<String> zendmelist,int routeCount,boolean isReverse) throws RouteCalculationException{
 
 		logger.info("查询非直达路径" );
 		
@@ -987,6 +1018,8 @@ public class RouteCalculationImpl implements RouteCalculation{
 			exCluseBean.setZdid(aendzd);
 			excludelist.add(exCluseBean);
 		}
+	    
+	    /**
 	    Map<String ,List<ExCluseBean> > cluseMap = new HashMap<String ,List<ExCluseBean> >();
 	    for (int i = 0; i < excludelist.size(); i++) {
 	    	ExCluseBean bean = excludelist.get(i);
@@ -999,13 +1032,20 @@ public class RouteCalculationImpl implements RouteCalculation{
 	    		cluseMap.put(bean.getZdid(), clist);
 	    	}
 		}
+		*/
+	    List<ExCluseBean> inclusedlist = new ArrayList<ExCluseBean>();
+	    for (int i = 0; i < excludelist.size(); i++) {
+	    	ExCluseBean bean = excludelist.get(i);
+	    	inclusedlist.add(bean);
+		}
 	    
 	    param.getAttrMap().put("excludeMelist", excludeMelist);
 	    param.getAttrMap().put("excludePtplist", excludePtplist);
-	    param.getAttrMap().put("inclusemap", cluseMap);
+	    param.getAttrMap().put("inclusedlist", inclusedlist);
+	    param.getAttrMap().put("meParentMap", resourceManager.meParentMap);
 	    
 	    logger.info("开始查询最短路径" );
-		CaculatorResult result = isearch.search(businessAvator.getKey(), param, new Dijkstra4OtnV2());
+		CaculatorResult result = isearch.search(businessAvator.getKey(), param, new Dijkstra4OtnV2(isReverse));
 		logger.info("查询最短路径结果：" +  result);
 		if( result ==null ){
 			logger.info("查询最短路径无结果");
@@ -1019,7 +1059,10 @@ public class RouteCalculationImpl implements RouteCalculation{
 		ArrayList<RouteCalculationResult> routeCalculationResultlist = new ArrayList<RouteCalculationResult>();
 		for (int i = 0; i < result.getWays().size(); i++) {
 			CaculatorResultWay caculatorResultWay = result.getWays().get(i);
-			routeCalculationResultlist.addAll(dealRoute(caculatorResultWay,input));
+			ArrayList<RouteCalculationResult> newways = dealRoute(caculatorResultWay,input);
+			if( newways!=null && newways.size()>0){
+				routeCalculationResultlist.addAll(newways);
+			}
 		}
 		//对资源信息进行排序
 		Collections.sort(routeCalculationResultlist, new RouteJumpedComparator());
@@ -1106,7 +1149,9 @@ public class RouteCalculationImpl implements RouteCalculation{
 			inputRateOrder = ConstBusiness.odukMap.get( input.getRate() );
 		}
 		startRate = inputRateOrder.intValue();
-		return grenT( startRate,routelist ,input) ;
+		//return grenT( startRate,routelist ,input) ;
+		
+		return grenTV2( startRate,caculatorResultWay ,input) ;
 	}
 	
 	private void getfirstMe(Set<String> firstMes, LinkedList<Link> links) {
@@ -1173,6 +1218,131 @@ public class RouteCalculationImpl implements RouteCalculation{
 		
 	}
 
+	private ArrayList<RouteCalculationResult> grenTV2( int layer , CaculatorResultWay caculatorResultWay ,RouteCalculationInput input){
+		
+		
+		ArrayList<RouteCalculationResult> rtnValue = new ArrayList<RouteCalculationResult>(); 
+		
+		LinkedList<ZdResult> allroutes = new LinkedList<ZdResult>();
+		ArrayList<RouteCalculationResult> rtnlist = new ArrayList<RouteCalculationResult>();
+		
+		RouteCalculationResult mainRoute = new RouteCalculationResult();
+		mainRoute.setBusiCount(caculatorResultWay.getRouts().size()-1);
+		mainRoute.setZdCount(0);
+		
+		List<Integer> passedindex = caculatorResultWay.getPassbjindex();
+		LinkedList<CaculatorResultWayRoute>  routelist = caculatorResultWay.getRouts();
+
+		
+		LinkedList<LinkedList<Link>> alllinks =  new LinkedList<LinkedList<Link>>();
+		for (int i = 0; i < routelist.size()-1; i++) {
+			CaculatorResultWayRoute route = routelist.get(i);
+			
+			LinkedList<Link>  links = null;
+			if( passedindex.contains(i)){
+				links = getNextLink(layer, route , true);
+			}
+			else{
+				links = getNextLink(layer, route , false);
+			}
+			
+			if(links ==null || links.size()==0){
+				logger.error(" links为空，路径过滤  ");
+				return null;
+			}else{
+				logger.info(" 第 " + i +" 端路径  ,links：" +links);
+				alllinks.add(links);
+			}
+		}
+		
+		int i = 0 ;
+		Link prevlink = null;
+		while( i  < alllinks.size() ){
+			LinkedList<Link> current = alllinks.get(i);
+			
+			Link l = getOneLink(current, prevlink);
+			if(l==null){
+				return null;
+			}
+			
+			ZdResult zdResult = l.getZdResult();
+			//logger.info(" 处理路径结果  ,添加zdResult：" +zdResult);
+			if(!dealZdResult(zdResult, input)){
+				logger.error(" 拼接板卡为空，路径过滤  ");
+				return null;
+			}
+			
+			allroutes.offer( zdResult ) ;
+			i++;
+			prevlink = l;
+			
+		}
+		
+		ArrayList<RouteCalculationResultRouteWrapper> outputlist = convertToOutput(allroutes,input);
+		
+		int zdcount = 0 ;
+		for (int s = 0; s < outputlist.size(); s++) {
+			RouteCalculationResultRouteWrapper wrapper = outputlist.get(s);
+			zdcount += wrapper.getZdCountInSnc() ; 
+		}
+		mainRoute.setZdCount(zdcount);
+		mainRoute.setRouteCalculationResultRouteWrapper(outputlist);;
+		
+		rtnValue.add(mainRoute);
+		
+		return rtnValue;
+	}
+	
+	private Link getOneLink(LinkedList<Link> current, Link prev) {
+		Link l = current.removeFirst();
+		
+		//判断回头的情况
+		while( true ){
+			if( !checkRouteBak(l,prev)){
+				if( current.size() > 0 ){
+					l = current.removeFirst();
+				}
+				else{
+					return null;
+				}
+			}
+			else{
+				break;
+			}
+		}
+		
+		return l;
+				
+	}
+
+	private boolean checkRouteBak(Link l, Link prev) {
+
+		boolean pass = true ; 
+		ZdResult zdResult = l.getZdResult();
+		Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+		Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+		
+		for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+			for (int i = 0; i < zdsinglelist.size(); i++) {
+				ZdResultSingle zd = zdsinglelist.get(i);
+				
+				String meid = resourceManager.meParentMap.get(zd.getAendmeid());
+				if( !l.getPassedbigmelist().contains(meid)){
+					l.getPassedbigmelist().add(meid);
+				}
+				
+				if( prev!=null && prev.getPassedbigmelist().contains(meid)){
+					if( !prev.getPassedbigmelist().get( prev.getPassedbigmelist().size()-1).equals(meid)){
+						pass = false;
+					}
+					
+				}
+			}
+		}
+		
+		return pass;
+	}
+
 	private ArrayList<RouteCalculationResult> grenT( int layer , LinkedList<CaculatorResultWayRoute> routelist ,RouteCalculationInput input){
 		
 		ArrayList<RouteCalculationResult> rtnlist = new ArrayList<RouteCalculationResult>();
@@ -1199,16 +1369,57 @@ public class RouteCalculationImpl implements RouteCalculation{
 		return rtnlist ;
 	}
 	
+	private  LinkedList<Link> getNextLink(int layer , CaculatorResultWayRoute caculatorResultWayRoute, boolean mastPass){
+		
+		LinkedList<Link> rtnlist  = new LinkedList<Link>();
+		while( layer < 6 ){
+			logger.info("  层速率  ：" + layer );
+			LinkedList<Link> links = caculatorResultWayRoute.getRouteByType(layer);
+			
+			if(!PropertiesHander.getProperty("includeClientResource").equals("true")){
+				for (Iterator<Link> iter = links.iterator(); iter.hasNext();) {
+					Link link =  iter.next();
+					ZdResult zdResult = link.getZdResult();
+					if( ConstBusiness.rateMap.get(Integer.valueOf(zdResult.getRate()))!=null ){
+						logger.info("过滤客户侧资源:" + link.getZdResult().getSncid() + "," + link.getZdResult().getSncname()  );
+						iter.remove();
+					}
+				}
+			}
+			if( mastPass ){
+				for (int i = 0; i < links.size(); i++) {
+					 Link link = links.get(i);
+					 if(link.isPassed()){
+						 rtnlist.add(link);
+					 }
+				}
+			}
+			else{
+				rtnlist.addAll(links);
+			}
+			
+			//if( rtnlist !=null && rtnlist.size() > 0){
+			//	return rtnlist ;
+			//}
+			layer ++ ;
+		}
+		
+		return rtnlist;
+		
+	}
+	
 	private RouteCalculationResult grenRoute( int layer , LinkedList<CaculatorResultWayRoute> routelist ,RouteCalculationInput input){
 		
 		
 		LinkedList<ZdResult> allroutes = new LinkedList<ZdResult>();
 		
+		LinkedList<ZdResult> targetlinklist = new LinkedList<ZdResult>();
 		for (int j = 0; j < routelist.size()-1; j++) {
 			
 			logger.info(" 第 " + j +" 段路径  ");
 			
 			CaculatorResultWayRoute caculatorResultWayRoute = routelist.get(j);
+			
 			LinkedList<Link>  links = grenTer(layer, caculatorResultWayRoute);
 			
 			if(links ==null || links.size()==0){
@@ -1217,6 +1428,8 @@ public class RouteCalculationImpl implements RouteCalculation{
 			}else{
 				logger.info(" 第 " + j +" 端路径  ,links：" +links);
 			}
+			
+			targetlinklist.add( links.removeFirst().getZdResult() );
 			
 			ZdResult zdresult = gerenRouteLayer(links,input) ;
 			if( zdresult==null ){
@@ -1231,7 +1444,12 @@ public class RouteCalculationImpl implements RouteCalculation{
 		
 		RouteCalculationResult mainRoute = new RouteCalculationResult();
 		mainRoute.setBusiCount(routelist.size()-1);
-		mainRoute.setZdCount(2);
+		int zdcount = 0 ;
+		for (int i = 0; i < outputlist.size(); i++) {
+			RouteCalculationResultRouteWrapper wrapper = outputlist.get(i);
+			zdcount += wrapper.getZdCountInSnc() ; 
+		}
+		mainRoute.setZdCount(zdcount);
 		mainRoute.setRouteCalculationResultRouteWrapper(outputlist);;
 		
 		return mainRoute;
@@ -1940,7 +2158,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 			}
 			//如果是以线路板开始的，那么找到一个随机支路板的客户侧端口
 			else if(nCardmodellist.contains(headcardmodel)){
-				zlptplist =  resourceManager.queryZLPtp( headmeid );
+				zlptplist =  resourceManager.queryZLPtp( headmeid ,input.getRate());
 			}
 			
 			if(zlptplist!=null && zlptplist.size()>0 ){
@@ -1979,7 +2197,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 			}
 			//如果是以线路板开始的，那么找到一个随机支路板的客户侧端口
 			else if(nCardmodellist.contains(tailcardmodel)){
-				endzlptplist =  resourceManager.queryZLPtp( tailmeid );
+				endzlptplist =  resourceManager.queryZLPtp( tailmeid , input.getRate() );
 			}
 			
 			if( endzlptplist!=null && endzlptplist.size()>0 ){
@@ -2064,9 +2282,11 @@ public class RouteCalculationImpl implements RouteCalculation{
 					}
 			}
 			
+			/**
 			if( och!=null  &&( odu0!=null || odu1!=null || odu2!=null || odu3!=null)){
 				
-				String headctp = "/och="+och.getIndex()+  "/odu4="+ (odu4==null?"1":odu4.getIndex());
+				//String headctp = "/och="+och.getIndex()+  "/odu4="+ (odu4==null?"1":odu4.getIndex());
+				String headctp = "/och=1" +  "/odu4="+ (odu4==null?"1":odu4.getIndex());
 				if(odu0!=null){
 					headctp += "/odu0="+ odu0.getIndex();
 				}
@@ -2080,10 +2300,41 @@ public class RouteCalculationImpl implements RouteCalculation{
 					headctp += "/odu3="+ odu3.getIndex();
 				}
 				
+				logger.info("2zdResult-id:" + zdResult.getSncid()  + ", rate: " + input.getRate());
+				logger.info("2headctp:" + headctp );
+				
+				int lastSep = headctp.lastIndexOf("/");
+				int lastSep2 = headctp.lastIndexOf("=")+1;
+				String ctp = headctp.substring(lastSep,lastSep2) + "1";
+				
 				zdResult.setCtpStr(headctp);
+				zdResult.setHeadctpStr(ctp);
 				
 			}
+			else{
+			*/
+				//String headctp = "/och="+och.getIndex()+  "/odu4=1";
+				String headctp = "/och=1" + "/odu4=1";
+				
+				String oduinfo = zdResult.getODUinfo(input.getRate());
+				logger.info("zdResult-id:" + zdResult.getSncid()  + ", rate: " + input.getRate());
+				logger.info("oduinfo:" + oduinfo );
+				int lastSep = oduinfo.lastIndexOf("/");
+				int firstCommor = oduinfo.lastIndexOf("=")+1;
+				String ctp = oduinfo.substring(lastSep , firstCommor)+ "1";
+
+				int lastSep2 = oduinfo.lastIndexOf("/");
+				int firstCommor2 = oduinfo.indexOf(",") == -1 ? oduinfo.length():  oduinfo.indexOf(",");
+				headctp = headctp+= oduinfo.substring(lastSep2, firstCommor2);
+				
+				zdResult.setCtpStr(headctp);
+				zdResult.setHeadctpStr(ctp);
+				
+				
+			//}
 			
+			
+			/**
 			String headCtp = "";
 			Integer inputoduk = ConstBusiness.odukMap.get( input.getRate() );
 			if( inputoduk!=null ){
@@ -2104,8 +2355,28 @@ public class RouteCalculationImpl implements RouteCalculation{
 				}
 				zdResult.setHeadctpStr(headCtp);
 			}
+			else{
+				Integer clientoduk = ConstBusiness.rateMap.get( input.getRate() );
+				if( clientoduk.intValue()==0 ){
+					headCtp = "/odu0=1" ; 
+				}
+				else if( clientoduk.intValue()==2 ){
+					headCtp = "/odu1=1" ; 
+				}
+				else if( clientoduk.intValue()==3 ){
+					headCtp = "/odu2=1" ; 
+				}
+				else if( clientoduk.intValue()==4 ){
+					headCtp = "/odu3=1" ; 
+				}
+				else if( clientoduk.intValue()==5 ){
+					headCtp = "/odu4=1" ; 
+				}
+				zdResult.setHeadctpStr(headCtp);
+			}
+			*/
 			
-		
+			
 			return true;
 	}
 
@@ -2168,10 +2439,6 @@ public class RouteCalculationImpl implements RouteCalculation{
 	}
 	
 	public static void main(String[] args) {
-		RouteCalculationOutput p  =new RouteCalculationOutput();
-		p.setRate(2);
-		 XStream enc = new XStream();
-	     System.out.println(enc.toXML( p ));
 	}
 	
 }

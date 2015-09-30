@@ -25,7 +25,7 @@
     <property value="Sun Microsystems Inc." name="java.vm.specification.vendor"/>
     <property value="" name="user.variant"/>
     <property value="Windows XP" name="os.name"/>
-    <property value="D:\workspaceNew\.metadata\.plugins\org.eclipse.m2e.launching\launches\m2conf1230114985297859765.tmp" name="classworlds.conf"/>
+    <property value="D:\workspaceNew\.metadata\.plugins\org.eclipse.m2e.launching\launches\m2conf1509935937081730025.tmp" name="classworlds.conf"/>
     <property value="GBK" name="sun.jnu.encoding"/>
     <property value="C:\Program Files\Java\jdk1.5.0_22\bin;.;C:\WINDOWS\system32;C:\WINDOWS;D:/dev-env/jdk/bin/../jre/bin/client;D:/dev-env/jdk/bin/../jre/bin;D:/dev-env/jdk/bin/../jre/lib/i386;D:\oracle\product\10.2.0\db_1\bin;D:\dev-env\jdk\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\Program Files\Intel\DMIX;C:\Program Files\ThinkPad\ConnectUtilities;C:\Program Files\TortoiseSVN\bin;D;\JacORB\bin;D:\Program Files\nodejs\;D:\dev-env\apache-maven-3.1.1\bin;D:\dev-env\Git\cmd;C:\Documents and Settings\Auser\Application Data\npm;D:\dev-env\eclipse4\eclipse;" name="java.library.path"/>
     <property value="Java Platform API Specification" name="java.specification.name"/>

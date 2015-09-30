@@ -2,7 +2,9 @@ package com.zznode.opentnms.isearch.otnRouteService.manage;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
 import com.zznode.opentnms.isearch.otnRouteService.db.DBUtil;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbEmsMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbMeMapper;
@@ -236,37 +239,47 @@ public class ResourceManager {
 	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.aendmeobjectid) ajuzhan, ");
 	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.zendmeobjectid) zjuzhan, ");
 	  	sb.append(" wdmsnc.* ");
-	  	sb.append(" FROM wdmsnc ");
+	  	sb.append(" FROM wdmsnc,objectemsrelation r ");
 	  	sb.append(" where wdmsnc.emsobjectid='").append(emsid).append("' ");
+	  	sb.append(" and wdmsnc.objectid = r.objectid  ");
+	  	sb.append(" and r.isdelete='0'  ");
 	  	sb.append(" and rate not in ('40','107','108','109','8042') ");
-	  	sb.append(" and direction = '1' ");
-	  	// sb.append(" and wdmsnc.objectid in ('UUID:51686850-10da-11e5-9c2d-005056862639','UUID:51681a33-10da-11e5-9c2d-005056862639')");
+	  	//sb.append(" and direction = '1' ");
+	  	//sb.append(" and wdmsnc.objectid in ('UUID:51686850-10da-11e5-9c2d-005056862639','UUID:51681a33-10da-11e5-9c2d-005056862639')");
 	  	//sb.append(" and objectid in ('UUID:5169ef20-10da-11e5-9c2d-005056862639','UUID:5169c801-10da-11e5-9c2d-005056862639','UUID:5169a10c-10da-11e5-9c2d-005056862639','UUID:516979c8-10da-11e5-9c2d-005056862639') ");
-	  	/**
-	  	sb.append(" and objectid in ( ");
-	  	sb.append(" 'UUID:5166baa8-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:5166badf-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a1616-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:5166bad4-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:5166e1c9-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a161a-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a1625-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a1626-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a1627-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a3d19-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a640f-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a6410-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516a6411-10da-11e5-9c2d-005056862639',");
-	  	sb.append(" 'UUID:516ad974-10da-11e5-9c2d-005056862639' ) ");
-	  	*/
+	  	sb.append(" union all ");
+	  	sb.append(" SELECT ");
+	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.aendmeobjectid) ajuzhan, ");
+	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.zendmeobjectid) zjuzhan, ");
+	  	sb.append(" wdmsnc.* ");
+	  	sb.append(" FROM wdmsnc,objectemsrelation r ");
+	  	sb.append(" where wdmsnc.emsobjectid='").append(emsid).append("' ");
+	  	sb.append(" and wdmsnc.objectid = r.objectid  ");
+	  	sb.append(" and r.isdelete='0'  ");
+	  	sb.append(" and rate in ('107','108','109','8042') ");
+	  	sb.append(" and not exists( select 1 from wdmsnc c where c.aendptpobjectid = wdmsnc.aendptpobjectid and c.zendptpobjectid = wdmsnc.zendptpobjectid and c.rate in ('104','105','106','8041') ) ");
+	  	
+	  	
 	  	logger.info("getZdWmdsnc查询数据库路由开始：" + sb.toString());
-	  	return dbUtil.getJdbcTemplate().query(sb.toString(), new DbWdmSncZdExtractor());
+	  	Map<String, List<DbWdmSncAll>> rtnmsp = dbUtil.getJdbcTemplate().query(sb.toString(), new DbWdmSncZdExtractor());
+	  	
+	  	return rtnmsp;
 		
 	}
 	
-	public List<ZhiluPtp> queryZLPtp(String meobjectid) {
+	public List<ZhiluPtp> queryZLPtp(String meobjectid , Integer rate)  {
 		
-		String[] zlcards = PropertiesHander.getPropertylist("zlcard");
+		//String[] zlcards = PropertiesHander.getPropertylist("zlcard");
+		
+		Integer ratelevel = ConstBusiness.rateMap.get(rate);
+		if( ratelevel==null ){
+			ratelevel = ConstBusiness.odukMap.get(rate);
+		}
+		if( ratelevel.intValue() == 0 ){
+			ratelevel = 1 ;
+		}
+		String ratelevelkey = "zlportSRate_" + ratelevel ; 
+		List<String> avaliableCardType = Arrays.asList( PropertiesHander.getPropertylist(ratelevelkey) );
 		
 		StringBuilder sb = new StringBuilder();
 	  	sb.append(" SELECT ");
@@ -275,12 +288,30 @@ public class ResourceManager {
 	  	sb.append(" where card.meobjectid='").append(meobjectid).append("' ");
 	  	sb.append(" and card.objectid = ptp.cardobjectid ");
 	  	sb.append(" and ptp.tptype = 'PTP' ");
-	  	sb.append(" and ").append( getSqlInStatement("card.model", zlcards));
+	  	sb.append(" and ").append( getSqlInStatement("card.model", (String[])avaliableCardType.toArray(new String[avaliableCardType.size()])));
+	  	//sb.append(" order by card.model ");
+	  	 
 	  	//sb.append(" and not exists(select 1 from wdmsncroute where aendptpobjectid = ptp.objectid) ");
 	  	//sb.append(" and not exists(select 1 from wdmsncroute where zendptpobjectid = ptp.objectid) ");
 	  	
-	  	logger.info("查询支路盘信息："+ meobjectid);
+	  	
 	  	List<ZhiluPtp> zlptplist = dbUtil.getJdbcTemplate().query(sb.toString(), new ZhiluPtpMapper());
+	  	logger.info("查询支路盘信息："+ sb.toString()  );
+	  	
+	  	if( zlptplist==null || zlptplist.size()==0 ){
+	  		avaliableCardType = Arrays.asList( PropertiesHander.getPropertylist("zlportSRate_any") );
+	  		StringBuilder sb2 = new StringBuilder();
+	  		sb2.append(" SELECT ");
+	  		sb2.append(" ptp.objectid ptpobjectid ,ptp.cardobjectid cardobjectid,card.model cardmodel  ");
+	  		sb2.append(" FROM ptp,card ");
+	  		sb2.append(" where card.meobjectid='").append(meobjectid).append("' ");
+	  		sb2.append(" and card.objectid = ptp.cardobjectid ");
+	  		sb2.append(" and ptp.tptype = 'PTP' ");
+	  		sb2.append(" and ").append( getSqlInStatement("card.model", (String[])avaliableCardType.toArray(new String[avaliableCardType.size()])));
+	  		zlptplist = dbUtil.getJdbcTemplate().query(sb2.toString(), new ZhiluPtpMapper());
+	  		logger.info("查询支路盘信息any："+ sb2.toString()  );
+	  	}
+	  	
 	  	if( zlptplist!=null && zlptplist.size()> 0){
 	  		for (Iterator<ZhiluPtp> iter= zlptplist.iterator(); iter.hasNext();) {
 				ZhiluPtp zhiluPtp = iter.next();
@@ -392,10 +423,12 @@ public class ResourceManager {
 	  	sb.append(" SELECT ");
 	  	sb.append("(select juzhanobjectid from me   where objectid = wdmsnc.aendmeobjectid) juzhan, ");
 	  	sb.append(" wdmsnc.* ");
-	  	sb.append(" FROM wdmsnc ");
+	  	sb.append(" FROM wdmsnc,objectemsrelation r");
 	  	sb.append(" where wdmsnc.emsobjectid='").append(emsid).append("' ");
+	  	sb.append(" and wdmsnc.objectid = r.objectid  ");
+	  	sb.append(" and r.isdelete='0'  ");
 	  	sb.append(" and rate = '40' ");
-	  	sb.append(" and direction = '1' ");
+	  	//sb.append(" and direction = '1' ");
 	  	//sb.append(" and objectid in ('UUID:5169ef20-10da-11e5-9c2d-005056862639','UUID:5169c801-10da-11e5-9c2d-005056862639','UUID:5169a10c-10da-11e5-9c2d-005056862639','UUID:516979c8-10da-11e5-9c2d-005056862639') ");
 	  	/**
 	  	sb.append(" and objectid in ( ");
@@ -485,6 +518,63 @@ public class ResourceManager {
 	  		
 	  	
 	  	return rtnlist ; 
+	  	
+	}
+
+	public List<WdmSncRoute> queryForRouteReverse(String sncid) {
+		StringBuilder sb2 = new StringBuilder();
+		sb2.append("select wdmsncroute.*,");
+		sb2.append("sncobjectid,routeseq,wayseq,aendctpid,zendctpid, ");
+		sb2.append("(select model from card , ptp where card.objectid = ptp.cardobjectid and ptp.objectid=aendptpobjectid  ) acardmodel, ");
+		sb2.append("(select model from card , ptp where card.objectid = ptp.cardobjectid and ptp.objectid=zendptpobjectid  ) zcardmodel, ");
+		sb2.append("(select juzhanobjectid from me   where objectid = aendmeobjectid) ajuzhan, ");
+		sb2.append("(select juzhanobjectid from me   where objectid = zendmeobjectid) zjuzhan, ");
+		sb2.append("(select t.tsnobjectid from transformsubnetworklink t, me m where  t.meobjectid = m.parentmeobjectid and m.objectid = aendmeobjectid) tsnid , ");
+		sb2.append("aendmeobjectid,aendptpobjectid, ");
+		sb2.append("zendmeobjectid,zendptpobjectid ");
+		sb2.append("FROM wdmsncroute WHERE 1=1 and sncobjectid = '").append( sncid ).append("' ");
+		sb2.append("and protectionrole='0' and direction='0' ");
+		sb2.append(" order by  wdmsncroute.routeseq , wdmsncroute.wayseq ");
+		
+		logger.info("查询数据库路由开始：sncobjectid =" + sncid);
+		List<WdmSncRoute> wdmsncroutelist = dbUtil.getJdbcTemplate().query(sb2.toString(), new WdmSncRouteMapper());
+		Collections.reverse( wdmsncroutelist );
+		for (int i = 0; i < wdmsncroutelist.size(); i++) {
+			WdmSncRoute route = wdmsncroutelist.get(i);
+			String acardmodel = route.getAcardmodel();
+			String zcardmodel = route.getZcardmodel();
+			route.setAcardmodel(zcardmodel);
+			route.setZcardmodel(acardmodel);
+			
+			String ameid = route.getM_AEndMeObjectId();
+			String zmeid = route.getM_ZEndMeObjectId();
+			route.setM_AEndMeObjectId(zmeid);
+			route.setM_ZEndMeObjectId(ameid);
+			
+			String aptpid = route.getM_AEndPtpObjectId();
+			String zptpid = route.getM_ZEndPtpObjectId();
+			route.setM_AEndPtpObjectId(zptpid);
+			route.setM_AEndPtpObjectId(aptpid);
+			
+			String actpid = route.getM_AEndCtpId();
+			String zctpid = route.getM_ZEndCtpId();
+			route.setM_AEndCtpId(zctpid);
+			route.setM_ZEndCtpId(actpid);
+			
+		}
+  	
+		return wdmsncroutelist ; 
+	}
+
+	public String queryZhandianBySncid(String sncid) {
+
+		StringBuilder sb = new StringBuilder();
+	  	sb.append(" SELECT ");
+	  	sb.append("(select juzhanobjectid from me where objectid = aendmeobjectid)||'-'||(select juzhanobjectid from me where objectid = zendmeobjectid) juzhanStr ");
+	  	sb.append(" FROM wdmsnc ");
+	  	sb.append(" where objectid='").append(sncid).append("' ");
+	  	
+	  	return dbUtil.getJdbcTemplate().queryForObject(sb.toString(), String.class); 
 	  	
 	}
 	

@@ -1,7 +1,8 @@
 package com.zznode.opentnms.isearch.routeAlgorithm.api.model;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.zznode.opentnms.isearch.model.bo.ZdResult;
 import com.zznode.opentnms.isearch.routeAlgorithm.api.enumrate.Direction;
@@ -20,6 +21,8 @@ public class Link implements Serializable{
 	protected Node zendnode;
 	private int linkindex ; 
 	private ZdResult zdResult;
+	private boolean isPassed = false ;
+	private List<String> passedbigmelist = new ArrayList<String>() ;
 	
 	// 边的权重
 	public Long getWeight(Policy policy){
@@ -119,6 +122,29 @@ public class Link implements Serializable{
 
 	public void setZendnode(Node zendnode) {
 		this.zendnode = zendnode;
+	}
+
+
+	public boolean isPassed() {
+		return isPassed;
+	}
+
+
+	public void setPassed(boolean isPassed) {
+		this.isPassed = isPassed;
+	}
+
+
+	public List<String> getPassedbigmelist() {
+		if( passedbigmelist==null ){
+			passedbigmelist = new ArrayList<String>() ;
+		}
+		return passedbigmelist;
+	}
+
+
+	public void setPassedbigmelist(List<String> passedbigmelist) {
+		this.passedbigmelist = passedbigmelist;
 	}
 
 

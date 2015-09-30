@@ -21,6 +21,9 @@ public class CaculatorResultWayRoute {
 	private LinkedList<Link> odu4routs = new LinkedList<Link>();
 	private LinkedList<Link> ochrouts = new LinkedList<Link>();
 	
+	private LinkedList<Link> passedallroutes = new LinkedList<Link>();
+	private LinkedList<Link> notpassedallroutes = new LinkedList<Link>();
+	
 	private Map attrMap = new HashMap();
 	
 	
@@ -32,7 +35,6 @@ public class CaculatorResultWayRoute {
 	public void setAttrMap(Map attrMap) {
 		this.attrMap = attrMap;
 	}
-	
 	public int getAllRouteCount(){
 		return clientrouts.size() + odu0routs.size() + odu1routs.size() + odu2routs.size() + odu3routs.size() + odu4routs.size();
 	}
@@ -128,6 +130,19 @@ public class CaculatorResultWayRoute {
 	public void setRighteageid(List<String> righteageid) {
 		this.righteageid = righteageid;
 	}
+	public LinkedList<Link> getPassedallroutes() {
+		return passedallroutes;
+	}
+	public void setPassedallroutes(LinkedList<Link> passedallroutes) {
+		this.passedallroutes = passedallroutes;
+	}
+	public LinkedList<Link> getNotpassedallroutes() {
+		return notpassedallroutes;
+	}
+	public void setNotpassedallroutes(LinkedList<Link> notpassedallroutes) {
+		this.notpassedallroutes = notpassedallroutes;
+	}
+
 	@Override
 	public String toString() {
 		return "CaculatorResultWayRoute [routeseq=" + routeseq + ", nodeid="
