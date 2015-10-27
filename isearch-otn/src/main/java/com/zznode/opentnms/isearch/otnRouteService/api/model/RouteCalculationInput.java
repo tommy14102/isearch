@@ -180,6 +180,23 @@ public class RouteCalculationInput {
 		this.exclusionResource = exclusionWrapper;
 	}
 
+	@Override
+	public String toString() {
+		return "RouteCalculationInput [circuitname=" + circuitname
+				+ ", circuitType=" + circuitType + ", rate=" + rate
+				+ ", equipmentType=" + equipmentType + ", acity=" + acity
+				+ ", aendstationname=" + aendstationname
+				+ ", aendbuildingname=" + aendbuildingname + ", aendme="
+				+ aendme + ", aendport=" + aendport + ", atimeSlots="
+				+ atimeSlots + ", zcity=" + zcity + ", zendstationname="
+				+ zendstationname + ", zendbuildingname=" + zendbuildingname
+				+ ", zendme=" + zendme + ", zendport=" + zendport
+				+ ", ztimeSlots=" + ztimeSlots + ", ProtectionType="
+				+ ProtectionType + ", additionalInfo=" + additionalInfo
+				+ ", inclusionResource=" + inclusionResource
+				+ ", exclusionResource=" + exclusionResource + "]";
+	}
+
 	
 	
 

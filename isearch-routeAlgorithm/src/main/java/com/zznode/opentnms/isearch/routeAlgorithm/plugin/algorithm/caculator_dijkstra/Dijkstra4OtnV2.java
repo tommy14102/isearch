@@ -217,10 +217,10 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					Iterator<LinkedList<ZdResultSingle>>  iters = allzd.iterator();
 					LinkedList<ZdResultSingle> firstelement = iters.next();
 					
-					String headptp = aendptp ; 
+					//String headptp = aendptp ; 
 					String headctp = aendctp ; 
 					if(isReverse){
-						headptp = zendptp ; 
+					//	headptp = zendptp ; 
 						headctp = zendctp ; 
 					} 
 					
@@ -231,11 +231,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					}
 					
 					//判断是否经过a端口
-					if(	!StringUtils.isEmpty(headptp) && !firstelement.getFirst().getAendptpid().equals(headptp)){
-						iter.remove();
-						log.debug( " 计算两点间距离 ，按端口过滤:"+ zdResult.getSncid() );
-						continue;
-					}
+					//if(	!StringUtils.isEmpty(headptp) && !firstelement.getFirst().getAendptpid().equals(headptp)){
+					//	iter.remove();
+					//	log.debug( " 计算两点间距离 ，按端口过滤:"+ zdResult.getSncid() );
+					//	continue;
+					//}
 					
 					//判断是否经过a时隙
 					if(	!StringUtils.isEmpty(headctp) && !firstelement.getFirst().getAendctp().equals(headctp)){
@@ -285,11 +285,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 						lastelement = iters.next();
 					}
 					
-					String tailptp = zendptp ; 
+					//String tailptp = zendptp ; 
 					String tailctp = zendctp ; 
 					if(isReverse){
-						tailptp = aendptp ; 
-						tailptp = aendctp ; 
+					//	tailptp = aendptp ; 
+						tailctp = aendctp ; 
 					}
 					
 					if( zendmelist.size()>0 && !zendmelist.contains(lastelement.getLast().getZendmeid())){
@@ -299,11 +299,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					}
 					
 					//判断是否经过z端口
-					if(	!StringUtils.isEmpty(tailptp) && !lastelement.getLast().getZendptpid().equals(tailptp)){
-						iter.remove();
-						log.debug( " 计算两点间距离 ，按z端口过滤:"+ zdResult.getSncid() );
-						continue;
-					}
+					//if(	!StringUtils.isEmpty(tailptp) && !lastelement.getLast().getZendptpid().equals(tailptp)){
+					//	iter.remove();
+					//	log.debug( " 计算两点间距离 ，按z端口过滤:"+ zdResult.getSncid() );
+					//	continue;
+					//}
 					
 					//判断是否经过z时隙
 					if(	!StringUtils.isEmpty(tailctp) && !lastelement.getLast().getZendctp().equals(tailctp)){

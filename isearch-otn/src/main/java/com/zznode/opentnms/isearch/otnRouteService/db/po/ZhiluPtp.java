@@ -1,12 +1,20 @@
 package com.zznode.opentnms.isearch.otnRouteService.db.po;
 
-import java.sql.ResultSet;
 
 public class ZhiluPtp 
 {
-    public String ptpobjectid = "";        //VARCHAR(128),              /*波分通道路由对象ID*/
-    public String cardobjectid = "";     //VARCHAR(128),              /*波分通道对象ID*/
-    public String cardmodel = "";     //VARCHAR(128),
+    public String ptpobjectid = "";        
+    public String cardobjectid = "";     
+    public String cardmodel = "";      
+    public String tptype = "";     
+    
+    
+	public String getTptype() {
+		return tptype;
+	}
+	public void setTptype(String tptype) {
+		this.tptype = tptype;
+	}
 	public String getPtpobjectid() {
 		return ptpobjectid;
 	}

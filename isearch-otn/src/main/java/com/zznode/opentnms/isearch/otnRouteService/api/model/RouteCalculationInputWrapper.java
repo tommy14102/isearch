@@ -15,6 +15,11 @@ public class RouteCalculationInputWrapper {
 	public void setClusionBean(List<ClusionBean> clusionBean) {
 		this.clusionBean = clusionBean;
 	}
+
+	@Override
+	public String toString() {
+		return "RouteCalculationInputWrapper [clusionBean=" + clusionBean + "]";
+	}
 	
 	
 	

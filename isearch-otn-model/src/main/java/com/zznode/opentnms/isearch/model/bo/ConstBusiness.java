@@ -130,6 +130,7 @@ public class ConstBusiness {
 	    */
 	    
 	    passedProtectedCardSet.add("DCP");
+	    passedProtectedCardSet.add("12DCP");
 	    
 	}
 	

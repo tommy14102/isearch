@@ -18,6 +18,10 @@ public class ClusionBean {
 	public void setPtpid(String ptpid) {
 		this.ptpid = ptpid;
 	}
+	@Override
+	public String toString() {
+		return "ClusionBean [meid=" + meid + ", ptpid=" + ptpid + "]";
+	}
 	
 	
 

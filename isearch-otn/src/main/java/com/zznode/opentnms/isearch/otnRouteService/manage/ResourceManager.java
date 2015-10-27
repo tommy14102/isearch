@@ -13,12 +13,15 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
+import com.zznode.opentnms.isearch.otnRouteService.api.model.CardUsedPtpInfo;
+import com.zznode.opentnms.isearch.otnRouteService.api.model.CardUsedPtpOutput;
 import com.zznode.opentnms.isearch.otnRouteService.db.DBUtil;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbEmsMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbMeMapper;
@@ -27,12 +30,14 @@ import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbWdmOchZdExtractor
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbWdmSncAllExtractor;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbWdmSncMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbWdmSncZdExtractor;
+import com.zznode.opentnms.isearch.otnRouteService.db.mapper.UsedPtpMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.WdmSncRouteMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.ZhiluPtpMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbEms;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbMe;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbWdmSnc;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.DbWdmSncAll;
+import com.zznode.opentnms.isearch.otnRouteService.db.po.UsedPtp;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.WdmSncRoute;
 import com.zznode.opentnms.isearch.otnRouteService.db.po.ZhiluPtp;
 import com.zznode.opentnms.isearch.otnRouteService.util.PropertiesHander;
@@ -267,7 +272,7 @@ public class ResourceManager {
 		
 	}
 	
-	public List<ZhiluPtp> queryZLPtp(String meobjectid , Integer rate)  {
+	public List<ZhiluPtp> queryZLPtp(String meobjectid , Integer rate, String aendptp)  {
 		
 		//String[] zlcards = PropertiesHander.getPropertylist("zlcard");
 		
@@ -283,12 +288,15 @@ public class ResourceManager {
 		
 		StringBuilder sb = new StringBuilder();
 	  	sb.append(" SELECT ");
-	  	sb.append(" ptp.objectid ptpobjectid ,ptp.cardobjectid cardobjectid,card.model cardmodel  ");
+	  	sb.append(" ptp.objectid ptpobjectid ,ptp.cardobjectid cardobjectid,card.model cardmodel, ptp.tptype  ");
 	  	sb.append(" FROM ptp,card ");
 	  	sb.append(" where card.meobjectid='").append(meobjectid).append("' ");
 	  	sb.append(" and card.objectid = ptp.cardobjectid ");
 	  	sb.append(" and ptp.tptype = 'PTP' ");
 	  	sb.append(" and ").append( getSqlInStatement("card.model", (String[])avaliableCardType.toArray(new String[avaliableCardType.size()])));
+	  	if( !StringUtils.isEmpty(aendptp) ){
+	  		sb.append(" and ptp.objectid = '").append(aendptp).append("' ");
+	  	}
 	  	//sb.append(" order by card.model ");
 	  	 
 	  	//sb.append(" and not exists(select 1 from wdmsncroute where aendptpobjectid = ptp.objectid) ");
@@ -302,12 +310,16 @@ public class ResourceManager {
 	  		avaliableCardType = Arrays.asList( PropertiesHander.getPropertylist("zlportSRate_any") );
 	  		StringBuilder sb2 = new StringBuilder();
 	  		sb2.append(" SELECT ");
-	  		sb2.append(" ptp.objectid ptpobjectid ,ptp.cardobjectid cardobjectid,card.model cardmodel  ");
+	  		sb2.append(" ptp.objectid ptpobjectid ,ptp.cardobjectid cardobjectid,card.model cardmodel, ptp.tptype ");
 	  		sb2.append(" FROM ptp,card ");
 	  		sb2.append(" where card.meobjectid='").append(meobjectid).append("' ");
 	  		sb2.append(" and card.objectid = ptp.cardobjectid ");
 	  		sb2.append(" and ptp.tptype = 'PTP' ");
 	  		sb2.append(" and ").append( getSqlInStatement("card.model", (String[])avaliableCardType.toArray(new String[avaliableCardType.size()])));
+	  		if( !StringUtils.isEmpty(aendptp) ){
+	  			sb2.append(" and ptp.objectid = '").append(aendptp).append("' ");
+		  	}
+	  		
 	  		zlptplist = dbUtil.getJdbcTemplate().query(sb2.toString(), new ZhiluPtpMapper());
 	  		logger.info("查询支路盘信息any："+ sb2.toString()  );
 	  	}
@@ -327,21 +339,49 @@ public class ResourceManager {
 	}
 	
 	
-	public List<ZhiluPtp> queryZLClinetPtp(String xlptpobjectid) {
+	public List<ZhiluPtp> queryZLClinetPtp(String zlptpobjectid, String aendptp ) {
+		
+		/**
+		if( usedPtpSet.contains(zlptpobjectid) ){
+			StringBuilder sb = new StringBuilder();
+		  	sb.append(" SELECT ");
+		  	sb.append(" p.objectid ptpobjectid ,p.cardobjectid cardobjectid,card.model cardmodel  ");
+		  	sb.append(" FROM ptp p , ptp,card  ");
+		  	sb.append(" where ptp.objectid='").append(zlptpobjectid).append("' ");
+		  	sb.append(" and ptp.cardobjectid=card.objectid ");
+		  	sb.append(" and p.cardobjectid=card.objectid ");
+		  	sb.append(" and p.tptype = 'PTP' ");
+		  	sb.append(" and p.objectid = '").append(zlptpobjectid).append("' ");
+		  	if( !StringUtils.isEmpty(aendptp) ){
+		  		sb.append(" and p.objectid = '").append(aendptp).append("' ");
+		  	}
+		  	
+		  	logger.info("查询zl盘信息："+ zlptpobjectid);
+		  	List<ZhiluPtp> zlptplist =  dbUtil.getJdbcTemplate().query(sb.toString(), new ZhiluPtpMapper());
+		  	return zlptplist;
+		  	
+	  	}
+	  	*/
+		
 		
 		StringBuilder sb = new StringBuilder();
 	  	sb.append(" SELECT ");
-	  	sb.append(" p.objectid ptpobjectid ,p.cardobjectid cardobjectid,card.model cardmodel  ");
+	  	sb.append(" p.objectid ptpobjectid ,p.cardobjectid cardobjectid,card.model cardmodel, p.tptype  ");
 	  	sb.append(" FROM ptp p , ptp,card  ");
-	  	sb.append(" where ptp.objectid='").append(xlptpobjectid).append("' ");
+	  	sb.append(" where ptp.objectid='").append(zlptpobjectid).append("' ");
 	  	sb.append(" and ptp.cardobjectid=card.objectid ");
 	  	sb.append(" and p.cardobjectid=card.objectid ");
 	  	sb.append(" and p.tptype = 'PTP' ");
-	  	//sb.append(" and not exists(select 1 from wdmsncroute where aendptpobjectid = p.objectid) ");
-	  	//sb.append(" and not exists(select 1 from wdmsncroute where zendptpobjectid = p.objectid) ");
+	  	if( !StringUtils.isEmpty(aendptp) ){
+	  		sb.append(" and p.objectid = '").append(aendptp).append("' ");
+	  	}
+	  	else{
+	  		sb.append(" and p.objectid = '").append(zlptpobjectid).append("' ");
+	  	}
 	  	
-	  	logger.info("查询支路盘信息2："+ xlptpobjectid);
+	  	logger.info("查询支路盘信息2："+ zlptpobjectid);
 	  	List<ZhiluPtp> zlptplist =  dbUtil.getJdbcTemplate().query(sb.toString(), new ZhiluPtpMapper());
+	  	
 	  	if( zlptplist!=null && zlptplist.size()> 0){
 	  		for (Iterator<ZhiluPtp> iter= zlptplist.iterator(); iter.hasNext();) {
 				ZhiluPtp zhiluPtp = iter.next();
@@ -356,6 +396,59 @@ public class ResourceManager {
 		
 	}
 	
+	public List<ZhiluPtp> queryZLClinetPtp2(String zlptpobjectid, String aendptp ) {
+		
+		//查询ptp信息
+		StringBuilder sb = new StringBuilder();
+		sb.append(" SELECT ");
+		sb.append(" p.objectid ptpobjectid ,p.cardobjectid cardobjectid, p.tptype, card.model cardmodel ");
+		sb.append(" FROM ptp p , card  ");
+		sb.append(" where p.objectid='").append(zlptpobjectid).append("' ");
+		sb.append(" and p.cardobjectid=card.objectid ");
+		  	
+		List<ZhiluPtp> ptps =  dbUtil.getJdbcTemplate().query(sb.toString(), new ZhiluPtpMapper());
+		ZhiluPtp ptp = ptps.get(0);
+		
+		if( ptp.getTptype().equals("FTP")){
+			
+			//如果是FTP，那么查询支路侧口
+			StringBuilder sb2 = new StringBuilder();
+			sb2.append(" SELECT ");
+			sb2.append(" p.objectid ptpobjectid ,p.cardobjectid cardobjectid, card.model cardmodel , p.tptype ");
+			sb2.append(" FROM ptp p , card  ");
+			sb2.append(" where ");
+			sb2.append(" and p.cardobjectid=card.objectid ");
+			sb2.append(" and p.tptype = 'PTP' ");
+			sb2.append(" and card.objectid = '").append( ptp.getCardobjectid() ).append("' ");
+		  	if( !StringUtils.isEmpty(aendptp) ){
+		  		sb.append(" and p.objectid = '").append(aendptp).append("' ");
+		  	}
+		  	
+		  	logger.info("查询支路盘信息1："+ zlptpobjectid);
+		  	List<ZhiluPtp> zlptplist =  dbUtil.getJdbcTemplate().query(sb.toString(), new ZhiluPtpMapper());
+		  	
+		  	if( zlptplist!=null && zlptplist.size()> 0){
+		  		for (Iterator<ZhiluPtp> iter= zlptplist.iterator(); iter.hasNext();) {
+					ZhiluPtp zhiluPtp = iter.next();
+					if( usedPtpSet.contains( zhiluPtp.getPtpobjectid())){
+						iter.remove();
+						continue;
+					}
+				}
+		  	}
+		  	return zlptplist;
+		}
+		else{
+			
+			List<ZhiluPtp> zlptplist = new ArrayList<ZhiluPtp>();
+			if( StringUtils.isEmpty(aendptp) || zlptpobjectid.equals(aendptp) ){
+				zlptplist.add(ptp);
+			}
+			return zlptplist ; 
+			
+		}
+	}
+
 	 public static String getSqlInStatement(String columnName, String[] values) {
 
 	        if (values == null || values.length == 0)
@@ -575,6 +668,56 @@ public class ResourceManager {
 	  	sb.append(" where objectid='").append(sncid).append("' ");
 	  	
 	  	return dbUtil.getJdbcTemplate().queryForObject(sb.toString(), String.class); 
+	  	
+	}
+
+	public String getPtpMeInfo(String portid) {
+
+		StringBuilder sb = new StringBuilder();
+	  	sb.append(" SELECT ");
+	  	sb.append(" meobjectid ");
+	  	sb.append(" FROM ptp ");
+	  	sb.append(" where objectid='").append(portid).append("' ");
+	  	
+	  	return dbUtil.getJdbcTemplate().queryForObject(sb.toString(), String.class); 
+	  	
+	}
+
+	public CardUsedPtpOutput queryCardptpinfo(String cardobjectid) {
+		
+		StringBuilder sb = new StringBuilder();
+	  	sb.append(" SELECT ");
+	  	sb.append(" p.objectid ptpobjectid ,p.portname ptpname,  ");
+	  	sb.append(" (select max(objectid) from wdmsnc where aendptpobjectid = p.objectid) awdmtrailid,  ");
+	  	sb.append(" (select max(objectid) from wdmsnc where zendptpobjectid = p.objectid) zwdmtrailid   ");
+	  	sb.append(" FROM ptp p  ");
+	  	sb.append(" where p.cardobjectid='").append(cardobjectid).append("' ");
+	  	
+	  	logger.info("查询ptp信息："+ cardobjectid);
+	  	List<UsedPtp> zlptplist =  dbUtil.getJdbcTemplate().query(sb.toString(), new UsedPtpMapper());
+	  	
+	  	CardUsedPtpOutput output = new CardUsedPtpOutput();
+	  	List<CardUsedPtpInfo> usedPtplist = new ArrayList<CardUsedPtpInfo>();
+		List<CardUsedPtpInfo> unusedPtplist = new ArrayList<CardUsedPtpInfo>();
+		
+		for (int i = 0; i < zlptplist.size(); i++) {
+			UsedPtp ptp = zlptplist.get(i);
+			CardUsedPtpInfo info = new CardUsedPtpInfo();
+			info.setObjectid(ptp.getPtpobjectid());
+			info.setPortname(ptp.getPtpname());
+			
+			if( StringUtils.isEmpty( ptp.getAwdmtrailid()) && StringUtils.isEmpty( ptp.getZwdmtrailid())  ){
+				unusedPtplist.add(info);
+			}
+			else{
+				usedPtplist.add(info);
+			}
+		}
+	  	
+		output.setUsedPtplist(usedPtplist);
+		output.setUnusedPtplist(unusedPtplist);
+		
+	  	return output;
 	  	
 	}
 	

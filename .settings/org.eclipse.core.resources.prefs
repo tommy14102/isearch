@@ -1,5 +1,9 @@
 eclipse.preferences.version=1
 encoding//src/main/java=UTF-8
+encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/CardUsedPtpInfo.java=UTF-8
+encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/CardUsedPtpInput.java=UTF-8
+encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/CardUsedPtpOutput.java=UTF-8
+encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/CardUsedPtplistCalculation.java=UTF-8
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculation.java=UTF-8
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationFault.java=UTF-8
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationInput.java=UTF-8
@@ -8,5 +12,8 @@ encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCal
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationService.java=UTF-8
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationServiceLocator.java=UTF-8
 encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/RouteCalculationServiceSoapBindingStub.java=UTF-8
+encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/impl/CardUsedPtplistCalculationImplService.java=UTF-8
+encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/impl/CardUsedPtplistCalculationImplServiceLocator.java=UTF-8
+encoding//src/main/java/com/zznode/opentnms/isearch/otnRouteService/api/impl/CardUsedPtplistCalculationImplServiceSoapBindingStub.java=UTF-8
 encoding//src/test/java=UTF-8
 encoding/<project>=UTF-8

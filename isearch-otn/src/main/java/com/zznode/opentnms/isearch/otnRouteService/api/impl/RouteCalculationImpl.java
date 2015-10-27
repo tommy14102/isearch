@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -29,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.thoughtworks.xstream.XStream;
 import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
 import com.zznode.opentnms.isearch.model.bo.OCH;
 import com.zznode.opentnms.isearch.model.bo.ODU;
@@ -107,6 +107,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 			}
 			
 			logger.info("参数rate："+ input.getRate() );
+			logger.info("参数："+ input );
 			
 			//1.查询两端网元，站点
 			String aendzd = input.getAendstationname();
@@ -160,6 +161,26 @@ public class RouteCalculationImpl implements RouteCalculation{
 				}
 			}
 			
+
+			if(!StringUtils.isEmpty(input.getAendport())){
+				String aendmeNew = resourceManager.getPtpMeInfo( input.getAendport() );
+				if(StringUtils.isEmpty(aendmeNew)){
+					throw new RouteCalculationException("-4", "根据A端端口没有查询到网元，" + input.getAendport() );
+				}
+				aednmelist.clear();
+				aednmelist.add(aendmeNew);
+				
+			}
+			
+			if(!StringUtils.isEmpty(input.getZendport())){
+				String zendmeNew = resourceManager.getPtpMeInfo( input.getZendport() );
+				if(StringUtils.isEmpty(zendmeNew)){
+					throw new RouteCalculationException("-4", "根据Z端端口没有查询到网元，" + input.getAendport() );
+				}
+				zednmelist.clear();
+				zednmelist.add(zendmeNew);
+			}
+			
 		
 		try{	
 			
@@ -186,7 +207,10 @@ public class RouteCalculationImpl implements RouteCalculation{
 			List<RouteCalculationResult> resultJP = findJumpedpathV3(input, aendzd, zendzd, aednmelist, zednmelist,routeCount-routeCalculationResult.size(),false );
 			if(resultJP!=null){
 				logger.info("resultJP,size: "+ resultJP.size());
-				routeCalculationResult.addAll(resultJP);
+				filterSameBigMe( resultZD , resultJP );
+				if( resultJP.size()>0){
+					routeCalculationResult.addAll(resultJP);
+				}
 			}
 			
 			//3查询反向路由
@@ -201,7 +225,10 @@ public class RouteCalculationImpl implements RouteCalculation{
 			List<RouteCalculationResult> resultJPReverse = findJumpedpathV3(input, zendzd, aendzd, zednmelist, aednmelist ,routeCount-routeCalculationReverseResult.size(),true);
 			if( resultJPReverse!=null){
 				logger.info("resultJPReverse,size: " + resultJPReverse.size());
-				routeCalculationReverseResult.addAll( resultJPReverse );
+				filterSameBigMe( resultZDReverse , resultJPReverse );
+				if( resultJPReverse.size()>0){
+					routeCalculationReverseResult.addAll(resultJPReverse);
+				}
 			}
 			
 			while( routeCalculationResultWrapper.size() < 5 && routeCalculationResult.size()>0 ){
@@ -230,6 +257,47 @@ public class RouteCalculationImpl implements RouteCalculation{
 		
 	}
 	
+	private void filterSameBigMe(List<RouteCalculationResult> resultZD,	List<RouteCalculationResult> resultJP) {
+		
+		if( resultZD ==null ){
+			return ;
+		}
+		
+		HashSet<TreeSet<String>> passedMes = new HashSet<TreeSet<String>>();
+		for (int i = 0; i < resultZD.size(); i++) {
+			
+			TreeSet<String>  passedMeSet = new TreeSet<String>();
+			RouteCalculationResult  routeCalculationResult = resultZD.get(i);
+			RouteCalculationResultRouteWrapper  routeCalculationResultRouteWrapper = routeCalculationResult.getRouteCalculationResultRouteWrapper().get(0);
+			ArrayList<RouteCalculationResultRoute> routelist = routeCalculationResultRouteWrapper.getRoute(); 
+			for (int j = 0; j < routelist.size(); j++) {
+				RouteCalculationResultRoute route = routelist.get(j);
+				passedMeSet.add(resourceManager.meParentMap.get( route.getAendmeobjectid()));
+				passedMeSet.add(resourceManager.meParentMap.get( route.getZendmeobjectid()));
+			}
+			passedMes.add(passedMeSet);
+		}
+			
+			
+		for (Iterator<RouteCalculationResult> iter = resultJP.iterator(); iter.hasNext();) {
+			RouteCalculationResult  routeCalculationResult =  iter.next();
+			
+			TreeSet<String>  passedMeSet = new TreeSet<String>();
+			RouteCalculationResultRouteWrapper  routeCalculationResultRouteWrapper = routeCalculationResult.getRouteCalculationResultRouteWrapper().get(0);
+			ArrayList<RouteCalculationResultRoute> routelist = routeCalculationResultRouteWrapper.getRoute(); 
+			for (int j = 0; j < routelist.size(); j++) {
+				RouteCalculationResultRoute route = routelist.get(j);
+				passedMeSet.add(resourceManager.meParentMap.get( route.getAendmeobjectid()));
+				passedMeSet.add(resourceManager.meParentMap.get( route.getZendmeobjectid()));
+			}
+			if( passedMes.contains(passedMeSet)){
+				iter.remove();
+				logger.info("根据总体重复网元进行过滤:" + routeCalculationResultRouteWrapper.getSncid() );
+				continue;
+			}
+		}
+	}
+
 	/**
 	 * 查询两个网元之间的直达路径
 	 * @param input
@@ -315,10 +383,10 @@ public class RouteCalculationImpl implements RouteCalculation{
 			logger.info("查询直达路径，根据速率进行过滤后数量:" + resultlist.size());
 			
 			//根据端口进行过滤
-			filterZDResultByPtp(resultlist, input , isReverse);
-			if( resultlist.size() == 0 ){
-				return null ; 
-			}
+			//filterZDResultByPtp(resultlist, input , isReverse);
+			//if( resultlist.size() == 0 ){
+			//	return null ; 
+			//}
 			logger.info("查询直达路径，根据端口进行过滤后数量:" + resultlist.size());
 			
 			//根据时隙进行过滤
@@ -380,7 +448,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 					}
 				}
 				
-				boolean dealflag = dealZdResult(zdResult, input);
+				boolean dealflag = dealZdResult(zdResult, input , isReverse , "0" );
 				if(!dealflag){
 					logger.error("直达路径，拼接板卡失败舍弃");
 					continue;
@@ -775,6 +843,10 @@ public class RouteCalculationImpl implements RouteCalculation{
 			
 			ZdResult zdResult =  zditerator.next();
 			
+			if("UUID:08c01069-2a60-11e5-8b4a-005056844447".equals(zdResult.getSncid())){
+				System.out.println(890);
+			}
+			
 			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
 			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
 			
@@ -783,11 +855,12 @@ public class RouteCalculationImpl implements RouteCalculation{
 
 				for (int i = 0; i < zdsinglelist.size(); i++) {
 					 ZdResultSingle zd = zdsinglelist.get(i);
-					 if( meSet.contains(zd.getAendmeid()) ){
-						 meSet.remove(zd.getAendmeid());
+					 if( meSet.contains(resourceManager.meParentMap.get(zd.getAendmeid()) )){
+						 //得改成大网元
+						 meSet.remove(resourceManager.meParentMap.get(zd.getAendmeid()));
 					 }
-					 if( meSet.contains(zd.getZendmeid()) ){
-						 meSet.remove(zd.getZendmeid());
+					 if( meSet.contains(resourceManager.meParentMap.get(zd.getZendmeid())) ){
+						 meSet.remove(resourceManager.meParentMap.get(zd.getZendmeid()));
 					 }
 					 if( ptpSet.contains(zd.getAendptpid()) ){
 						 ptpSet.remove(zd.getAendptpid());
@@ -850,12 +923,12 @@ public class RouteCalculationImpl implements RouteCalculation{
 
 				for (int i = 0; i < zdsinglelist.size(); i++) {
 					 ZdResultSingle zd = zdsinglelist.get(i);
-					 if( meSet.contains(zd.getAendmeid()) ){
+					 if( meSet.contains( resourceManager.meParentMap.get( zd.getAendmeid())) ){
 						 zditerator.remove();
 						 logger.info("根据禁止网元过滤:" + zdResult.getSncid() + "," + zdResult.getSncname());
 						 continue outer;
 					 }
-					 if( meSet.contains(zd.getZendmeid()) ){
+					 if( meSet.contains( resourceManager.meParentMap.get(zd.getZendmeid())) ){
 						 zditerator.remove();
 						 logger.info("根据禁止网元过滤:" + zdResult.getSncid() + "," + zdResult.getSncname());
 						 continue outer;
@@ -1059,7 +1132,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 		ArrayList<RouteCalculationResult> routeCalculationResultlist = new ArrayList<RouteCalculationResult>();
 		for (int i = 0; i < result.getWays().size(); i++) {
 			CaculatorResultWay caculatorResultWay = result.getWays().get(i);
-			ArrayList<RouteCalculationResult> newways = dealRoute(caculatorResultWay,input);
+			ArrayList<RouteCalculationResult> newways = dealRoute(caculatorResultWay,input , isReverse);
 			if( newways!=null && newways.size()>0){
 				routeCalculationResultlist.addAll(newways);
 			}
@@ -1070,7 +1143,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 	    return routeCalculationResultlist;
 	}
 	
-	private ArrayList<RouteCalculationResult> dealRoute( CaculatorResultWay caculatorResultWay,RouteCalculationInput input  ){
+	private ArrayList<RouteCalculationResult> dealRoute( CaculatorResultWay caculatorResultWay,RouteCalculationInput input, boolean isReverse ){
 		
 		//路由列表
 		LinkedList<CaculatorResultWayRoute> routelist = caculatorResultWay.getRouts();
@@ -1151,7 +1224,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 		startRate = inputRateOrder.intValue();
 		//return grenT( startRate,routelist ,input) ;
 		
-		return grenTV2( startRate,caculatorResultWay ,input) ;
+		return grenTV2( startRate,caculatorResultWay ,input , isReverse ) ;
 	}
 	
 	private void getfirstMe(Set<String> firstMes, LinkedList<Link> links) {
@@ -1218,17 +1291,12 @@ public class RouteCalculationImpl implements RouteCalculation{
 		
 	}
 
-	private ArrayList<RouteCalculationResult> grenTV2( int layer , CaculatorResultWay caculatorResultWay ,RouteCalculationInput input){
+	private ArrayList<RouteCalculationResult> grenTV2( int layer , CaculatorResultWay caculatorResultWay ,RouteCalculationInput input , boolean isReverse ){
 		
 		
 		ArrayList<RouteCalculationResult> rtnValue = new ArrayList<RouteCalculationResult>(); 
 		
-		LinkedList<ZdResult> allroutes = new LinkedList<ZdResult>();
 		ArrayList<RouteCalculationResult> rtnlist = new ArrayList<RouteCalculationResult>();
-		
-		RouteCalculationResult mainRoute = new RouteCalculationResult();
-		mainRoute.setBusiCount(caculatorResultWay.getRouts().size()-1);
-		mainRoute.setZdCount(0);
 		
 		List<Integer> passedindex = caculatorResultWay.getPassbjindex();
 		LinkedList<CaculatorResultWayRoute>  routelist = caculatorResultWay.getRouts();
@@ -1255,44 +1323,141 @@ public class RouteCalculationImpl implements RouteCalculation{
 			}
 		}
 		
+		LinkedList<Link> head = alllinks.getFirst();
+		addonlinks(head,alllinks,0);
+		
+		/**
 		int i = 0 ;
 		Link prevlink = null;
 		while( i  < alllinks.size() ){
 			LinkedList<Link> current = alllinks.get(i);
 			
-			Link l = getOneLink(current, prevlink);
+			//logger.info(" 处理路径结果  ,添加zdResult：" +zdResult);
+			String mode ="";
+			if( i ==0 ){
+				mode = "1";
+			}
+			if( i == alllinks.size()-1 ){
+				mode = "2";
+			}
+					
+			Link l = getOneLink(current, prevlink); 
 			if(l==null){
 				return null;
 			}
 			
 			ZdResult zdResult = l.getZdResult();
-			//logger.info(" 处理路径结果  ,添加zdResult：" +zdResult);
-			if(!dealZdResult(zdResult, input)){
-				logger.error(" 拼接板卡为空，路径过滤  ");
-				return null;
+			
+			while(true){
+				boolean result = dealZdResult(zdResult, input , isReverse , mode );
+				if(result){
+					logger.error(" 拼接板卡为空，路径过滤  ");
+					break;
+				}
+				l = getOneLink(current, prevlink);
+				if(l==null){
+					logger.error(" 拼接板卡为空，路径已全部过滤  ");
+					return null;
+				}
+				zdResult = l.getZdResult();
 			}
 			
-			allroutes.offer( zdResult ) ;
+			allroutes.offer( zdResult );
 			i++;
 			prevlink = l;
 			
 		}
+		*/
 		
-		ArrayList<RouteCalculationResultRouteWrapper> outputlist = convertToOutput(allroutes,input);
 		
-		int zdcount = 0 ;
-		for (int s = 0; s < outputlist.size(); s++) {
-			RouteCalculationResultRouteWrapper wrapper = outputlist.get(s);
-			zdcount += wrapper.getZdCountInSnc() ; 
+		
+		outer: for (int i = 0; i < allnewlist.size(); i++) {
+			
+			LinkedList<ZdResult> allroutes = new LinkedList<ZdResult>();
+			
+			LinkedList<Link> alllink = allnewlist.get(i);
+			for (int j = 0; j < alllink.size(); j++) {
+				
+				String mode ="";
+				if( j ==0 ){
+					mode = "1";
+				}
+				if( j == alllinks.size()-1 ){
+					mode = "2";
+				}
+				
+				Link l =  alllink.get(j);
+				ZdResult zdResult = l.getZdResult();
+				boolean result = dealZdResult(zdResult, input , isReverse , mode );
+				if(!result){
+					logger.error(" 拼接板卡为空，路径过滤  ");
+					continue outer;
+				}
+				allroutes.offer( zdResult ); 
+			}
+			
+			ArrayList<RouteCalculationResultRouteWrapper> outputlist = convertToOutput(allroutes,input);
+			int zdcount = 0 ;
+			for (int s = 0; s < outputlist.size(); s++) {
+				RouteCalculationResultRouteWrapper wrapper = outputlist.get(s);
+				zdcount += wrapper.getZdCountInSnc() ; 
+			}
+			
+			RouteCalculationResult mainRoute = new RouteCalculationResult();
+			mainRoute.setBusiCount(caculatorResultWay.getRouts().size()-1);
+			mainRoute.setZdCount(zdcount);
+			mainRoute.setRouteCalculationResultRouteWrapper(outputlist);
+			rtnValue.add(mainRoute);
 		}
-		mainRoute.setZdCount(zdcount);
-		mainRoute.setRouteCalculationResultRouteWrapper(outputlist);;
 		
-		rtnValue.add(mainRoute);
-		
+		allnewlist.clear();
 		return rtnValue;
 	}
 	
+	private void addonlinks(LinkedList<Link> head,	LinkedList<LinkedList<Link>> alllinks, int index) {
+
+		for (int i = 0; i < head.size(); i++) {
+			Link l = head.get(i);
+			s.push(l);
+			addonOnelink(l, alllinks, index+1);
+			s.pop();
+		}
+		
+	}
+	
+	Stack<Link> s = new Stack<Link>();
+	LinkedList<LinkedList<Link>> allnewlist = new LinkedList<LinkedList<Link>>() ;
+	
+	private LinkedList<Link> addonOnelink(Link head, LinkedList<LinkedList<Link>> alllinks, int index ) {
+		
+		
+		LinkedList<Link> currentlinks = alllinks.get(index);
+		for (int i = 0; i < currentlinks.size(); i++) {
+			 Link current = currentlinks.get(i);
+			 
+			 s.push(current);
+			 
+			 if( checkRouteBakV2(current,head) ){
+				 
+				 if( index < alllinks.size()-1 ){
+					 addonOnelink(current, alllinks, index+1  );
+				 } 
+				 else{
+					 LinkedList<Link> newlist = new LinkedList<Link>();
+					 for (int s1 = 0; s1 < s.size(); s1++) {
+						 newlist.add( s.get(s1) );
+					 }
+					 allnewlist.add(newlist);
+				 }
+			 }
+			 
+			 s.pop();
+		}
+		
+		return null;
+		
+	}
+
 	private Link getOneLink(LinkedList<Link> current, Link prev) {
 		Link l = current.removeFirst();
 		
@@ -1332,6 +1497,54 @@ public class RouteCalculationImpl implements RouteCalculation{
 				}
 				
 				if( prev!=null && prev.getPassedbigmelist().contains(meid)){
+					if( !prev.getPassedbigmelist().get( prev.getPassedbigmelist().size()-1).equals(meid)){
+						pass = false;
+					}
+					
+				}
+			}
+		}
+		
+		return pass;
+	}
+	
+	
+	private boolean checkRouteBakV2(Link l, Link prev) {
+		
+		if( prev.getPassedbigmelist()==null || prev.getPassedbigmelist().size()==0 ){
+			
+			ZdResult zdResult = prev.getZdResult();
+			Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+			Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+			
+			for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+				for (int i = 0; i < zdsinglelist.size(); i++) {
+					ZdResultSingle zd = zdsinglelist.get(i);
+					
+					String meid = resourceManager.meParentMap.get(zd.getAendmeid());
+					if( !prev.getPassedbigmelist().contains(meid)){
+						prev.getPassedbigmelist().add(meid);
+					}
+				}
+			}
+			
+		}
+
+		boolean pass = true ; 
+		ZdResult zdResult = l.getZdResult();
+		Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+		Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+		
+		for (LinkedList<ZdResultSingle> zdsinglelist : allzd) {
+			for (int i = 0; i < zdsinglelist.size(); i++) {
+				ZdResultSingle zd = zdsinglelist.get(i);
+				
+				String meid = resourceManager.meParentMap.get(zd.getAendmeid());
+				if( !l.getPassedbigmelist().contains(meid)){
+					l.getPassedbigmelist().add(meid);
+				}
+				
+				if( prev.getPassedbigmelist().contains(meid)){
 					if( !prev.getPassedbigmelist().get( prev.getPassedbigmelist().size()-1).equals(meid)){
 						pass = false;
 					}
@@ -1505,7 +1718,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 					}
 					
 					//A端线路，Z端合波
-					if( headXl==null && nCardmodellist.contains( zdResultSingle.getAendcardmodel() ) && mCardmodel.contains( zdResultSingle.getZendcardmodel() ) ){
+					if( headXl==null && nCardmodellist.contains( zdResultSingle.getAendcardmodel() ) && ( mCardmodel.contains( zdResultSingle.getZendcardmodel() ) || ConstBusiness.passedProtectedCardSet.contains( zdResultSingle.getZendcardmodel() ) ) ){
 						headXl = zdResultSingle;
 					}
 					
@@ -1515,7 +1728,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 					}
 					
 					//最后一段线路
-					if( nCardmodellist.contains( zdResultSingle.getZendcardmodel() ) && dCardmodel.contains( zdResultSingle.getAendcardmodel() ) ){
+					if( nCardmodellist.contains( zdResultSingle.getZendcardmodel() ) && ( dCardmodel.contains( zdResultSingle.getAendcardmodel() )|| ConstBusiness.passedProtectedCardSet.contains( zdResultSingle.getAendcardmodel() )) ){
 						tailXl = zdResultSingle;
 					}
 					
@@ -1757,7 +1970,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 		
 		ZdResult zdResult = clientlist.removeFirst().getZdResult();
 		//logger.info(" 处理路径结果  ,添加zdResult：" +zdResult);
-		if(!dealZdResult(zdResult, input)){
+		if(!dealZdResult(zdResult, input, false ,"")){
 			logger.error(" 拼接板卡为空，路径过滤  ");
 			return null;
 		}
@@ -2107,7 +2320,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 
 	*/
 	
-	private boolean dealZdResult(ZdResult zdResult, RouteCalculationInput input) {
+	private boolean dealZdResult(ZdResult zdResult, RouteCalculationInput input,boolean isReverse , String mode) {
 
 		List<String> mCardmodel = resourceManager.getMCardModel();
 		String[] nCardmodel = resourceManager.getNCardModel();
@@ -2152,13 +2365,32 @@ public class RouteCalculationImpl implements RouteCalculation{
 			
 			List<ZhiluPtp> zlptplist = null ;
 			
+			String aendptp = input.getAendport();
+			String zendptp = input.getZendport();
+			
+			if( isReverse ){
+				String tmp = aendptp;
+				aendptp = zendptp;
+				zendptp = tmp;
+			}
+			
+			if( mode.equals("0") ){
+				
+			}
+			else if( mode.equals("1") ){
+				zendptp ="";
+			}
+			else if( mode.equals("2") ){
+				aendptp ="";
+			}
+			
 			//如果是以支路板开始的，那么找到客户侧端口
 			if(tCardmodellist.contains(headcardmodel)){
-				zlptplist =  resourceManager.queryZLClinetPtp( headptp );
+				zlptplist =  resourceManager.queryZLClinetPtp2( headptp , aendptp );
 			}
 			//如果是以线路板开始的，那么找到一个随机支路板的客户侧端口
 			else if(nCardmodellist.contains(headcardmodel)){
-				zlptplist =  resourceManager.queryZLPtp( headmeid ,input.getRate());
+				zlptplist =  resourceManager.queryZLPtp( headmeid ,input.getRate() , aendptp );
 			}
 			
 			if(zlptplist!=null && zlptplist.size()>0 ){
@@ -2193,11 +2425,11 @@ public class RouteCalculationImpl implements RouteCalculation{
 			
 			//如果是以支路板开始的，那么找到客户侧端口
 			if(tCardmodellist.contains(tailcardmodel)){
-				endzlptplist =  resourceManager.queryZLClinetPtp( tailptp );
+				endzlptplist =  resourceManager.queryZLClinetPtp2( tailptp , zendptp );
 			}
 			//如果是以线路板开始的，那么找到一个随机支路板的客户侧端口
 			else if(nCardmodellist.contains(tailcardmodel)){
-				endzlptplist =  resourceManager.queryZLPtp( tailmeid , input.getRate() );
+				endzlptplist =  resourceManager.queryZLPtp( tailmeid , input.getRate() , zendptp );
 			}
 			
 			if( endzlptplist!=null && endzlptplist.size()>0 ){
