@@ -20,6 +20,7 @@ public class ZhiluPtpMapper implements RowMapper<ZhiluPtp> {
 		zhiluPtp.cardobjectid  = resultset.getString( "cardobjectid");
 		zhiluPtp.cardmodel  = resultset.getString( "cardmodel");
 		zhiluPtp.tptype = resultset.getString( "tptype");
+		zhiluPtp.ptpid = resultset.getString( "ptpid");
 		
 		return zhiluPtp  ; 
 		

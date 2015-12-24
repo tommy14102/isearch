@@ -7,8 +7,14 @@ public class ZhiluPtp
     public String cardobjectid = "";     
     public String cardmodel = "";      
     public String tptype = "";     
+    public String ptpid = "";     
     
-    
+	public String getPtpid() {
+		return ptpid;
+	}
+	public void setPtpid(String ptpid) {
+		this.ptpid = ptpid;
+	}
 	public String getTptype() {
 		return tptype;
 	}

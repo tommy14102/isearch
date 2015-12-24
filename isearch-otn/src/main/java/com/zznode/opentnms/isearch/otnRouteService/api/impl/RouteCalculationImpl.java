@@ -245,6 +245,12 @@ public class RouteCalculationImpl implements RouteCalculation{
 			logger.info("total,size: " + routeCalculationResultWrapper.size());
 			output.setRouteCalculationResultWrapper(routeCalculationResultWrapper);
 			
+			for (int i = 0; i < routeCalculationResultWrapper.size(); i++) {
+				RouteCalculationResultWrapper rrw = routeCalculationResultWrapper.get(i);
+				assignDesc(rrw);
+				
+			}
+			
 			return output;
 			
 		}
@@ -257,6 +263,23 @@ public class RouteCalculationImpl implements RouteCalculation{
 		
 	}
 	
+	private void assignDesc(RouteCalculationResultWrapper rrw) {
+
+		RouteCalculationResult rc = rrw.getWork(); 
+		ArrayList<RouteCalculationResultRouteWrapper> rwrapperlist = rc.getRouteCalculationResultRouteWrapper();
+		for (int i = 0; i < rwrapperlist.size(); i++) {
+			RouteCalculationResultRouteWrapper  way = rwrapperlist.get(i);
+			ArrayList<RouteCalculationResultRoute> routelist = way.getRoute();
+			RouteCalculationResultRoute head =  routelist.get(0);
+			RouteCalculationResultRoute tail =  routelist.get(routelist.size()-1);
+			
+			if( ConstBusiness.routeType_zxlwl.equals( head.getRouteType())){
+				
+			}
+		}
+		
+	}
+
 	private void filterSameBigMe(List<RouteCalculationResult> resultZD,	List<RouteCalculationResult> resultJP) {
 		
 		if( resultZD ==null ){
@@ -1669,6 +1692,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 
 	}
 	
+	here
 	private ArrayList<RouteCalculationResultRouteWrapper> convertToOutput( LinkedList<ZdResult> allroutes,RouteCalculationInput input ) {
 		
 		List<String> mCardmodel = resourceManager.getMCardModel();
@@ -1682,8 +1706,6 @@ public class RouteCalculationImpl implements RouteCalculation{
 		dCardmodel.add("12D40V");
 		dCardmodel.add("13D40");
 		dCardmodel.add("13D40V");
-		
-		
 		
 		String[] nCardmodel = resourceManager.getNCardModel();
 		String[] tCardmodel = resourceManager.getTCardModel();
@@ -1872,6 +1894,14 @@ public class RouteCalculationImpl implements RouteCalculation{
 				zdResultSingle.setZendctp(zdResult.getCtpStr());
 				
 				zdResultSingle.setRouteType( ConstBusiness.routeType_zxlwl);
+				
+				if( zdResult.getEmsVendor().endsWith("中兴")){
+					String aendctp = resourceManager.getCtpByPtp(zdResultSingle.getAendptpid());
+					zdResultSingle.setAendctp( aendctp );
+					String zendctp = resourceManager.getCtpByPtp(zdResultSingle.getZendptpid());
+					zdResultSingle.setZendctp( zendctp );
+				}
+				
 				singleResult.addFirst(zdResultSingle);
 			}
 				
@@ -2612,6 +2642,227 @@ public class RouteCalculationImpl implements RouteCalculation{
 			return true;
 	}
 
+	private boolean dealZdResultV2(ZdResult zdResult, RouteCalculationInput input,boolean isReverse , String mode) {
+
+		String emsVendor = resourceManager.getEmsVendorByWdmtrailid(zdResult.getSncid());
+		zdResult.setEmsVendor(emsVendor);
+		
+		List<String> mCardmodel = resourceManager.getMCardModel();
+		String[] nCardmodel = resourceManager.getNCardModel();
+		String[] tCardmodel = resourceManager.getTCardModel();
+		
+		List<String> nCardmodellist =  Arrays.asList(nCardmodel);
+		List<String> tCardmodellist =  Arrays.asList(tCardmodel);
+		
+		LinkedHashMap<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
+		Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+		
+		RouteCalculationResultRouteWrapper wrapper = new RouteCalculationResultRouteWrapper();
+		wrapper.setFreeOdu(zdResult.getODUinfo(input.getRate()));
+		wrapper.setZdCountInSnc(zdmap.size());
+		wrapper.setSncid(zdResult.getSncid());
+		wrapper.setLayerDesc(zdResult.getOdu().getClass().getSimpleName());
+		wrapper.setDirection(zdResult.getDirection());
+		ArrayList<RouteCalculationResultRoute> routelist = new ArrayList<RouteCalculationResultRoute>();
+		
+		Integer oduOrder = ConstBusiness.odukMap.get(Integer.valueOf(zdResult.getRate()));
+		if( oduOrder!=null ){
+			//odu路径，寻找到一个T板卡拼接到返回的路由中
+			Iterator<LinkedList<ZdResultSingle>> iter = allzd.iterator();
+			iter.hasNext();
+			LinkedList<ZdResultSingle> linkedList = iter.next();
+			ZdResultSingle headinfo = linkedList.getFirst();
+			String headzd = headinfo.getAendzdid();
+			String headmeid = headinfo.getAendmeid();
+			String headptp = headinfo.getAendptpid();
+			String headcardmodel = headinfo.getAendcardmodel();
+			
+			LinkedList<ZdResultSingle> nextZd = linkedList;
+			while(iter.hasNext()){
+				nextZd = iter.next();
+			}
+			
+			ZdResultSingle tailinfo = nextZd.getLast();
+			String tailzd = tailinfo.getZendzdid();
+			String tailmeid = tailinfo.getZendmeid();
+			String tailptp = tailinfo.getZendptpid();
+			String tailcardmodel = tailinfo.getZendcardmodel();
+			
+			List<ZhiluPtp> zlptplist = null ;
+			
+			String aendptp = input.getAendport();
+			String zendptp = input.getZendport();
+			
+			if( isReverse ){
+				String tmp = aendptp;
+				aendptp = zendptp;
+				zendptp = tmp;
+			}
+			
+			if( mode.equals("0") ){
+				
+			}
+			else if( mode.equals("1") ){
+				zendptp ="";
+			}
+			else if( mode.equals("2") ){
+				aendptp ="";
+			}
+			
+			//如果是以支路板开始的，那么找到客户侧端口
+			if(tCardmodellist.contains(headcardmodel)){
+				zlptplist =  resourceManager.queryZLClinetPtp2( headptp , aendptp , zdResult.getEmsVendor(),"0" );1
+			}
+			//如果是以线路板开始的，那么找到一个随机支路板的客户侧端口
+			else if(nCardmodellist.contains(headcardmodel)){
+				zlptplist =  resourceManager.queryZLPtp( headmeid ,input.getRate() , aendptp , zdResult.getEmsVendor(),"0" );2
+			}
+			
+			if(zlptplist!=null && zlptplist.size()>0 ){
+				
+					ZhiluPtp ptp = zlptplist.get(0);
+					
+					ZdResultSingle zdResultSingle = new ZdResultSingle();
+					zdResultSingle.setAendmeid(headmeid);
+					zdResultSingle.setAendzdid(headzd);
+					zdResultSingle.setAendptpid(ptp.getPtpobjectid());
+					zdResultSingle.setAendcardid(ptp.getCardobjectid());
+					zdResultSingle.setAendcardmodel(ptp.getCardmodel());
+					zdResultSingle.setAendctp("");
+					
+					zdResultSingle.setZendmeid(headmeid);
+					zdResultSingle.setZendzdid(headzd);
+					zdResultSingle.setZendptpid(headptp);
+					zdResultSingle.setZendcardid(headinfo.getAendcardid());
+					zdResultSingle.setZendcardmodel(headinfo.getAendcardmodel());
+					zdResultSingle.setZendctp("");
+					
+					zdResultSingle.setRouteType("2");
+					linkedList.addFirst(zdResultSingle);
+			}
+			else{
+				logger.info("没有查询到支路口信息：sncid："+ zdResult.getSncid()+ ", cardmodel:" + headcardmodel + ", ptpid:" + headptp) ; 
+				return false;
+			}
+			
+			
+			List<ZhiluPtp> endzlptplist = null ;
+			
+			//如果是以支路板开始的，那么找到客户侧端口
+			if(tCardmodellist.contains(tailcardmodel)){
+				endzlptplist =  resourceManager.queryZLClinetPtp2( tailptp , zendptp , zdResult.getEmsVendor(),"1" );3
+			}
+			//如果是以线路板开始的，那么找到一个随机支路板的客户侧端口
+			else if(nCardmodellist.contains(tailcardmodel)){
+				endzlptplist =  resourceManager.queryZLPtp( tailmeid , input.getRate() , zendptp , zdResult.getEmsVendor(),"1" );4
+			}
+			
+			if( endzlptplist!=null && endzlptplist.size()>0 ){
+				
+					ZhiluPtp ptp = endzlptplist.get(0);
+					
+					ZdResultSingle zdResultSingle = new ZdResultSingle();
+					zdResultSingle.setAendmeid(tailmeid);
+					zdResultSingle.setAendzdid(tailzd);
+					zdResultSingle.setAendptpid(tailptp);
+					zdResultSingle.setAendcardid(tailinfo.getZendcardid());
+					zdResultSingle.setAendcardmodel(tailcardmodel);
+					zdResultSingle.setAendctp("");
+					
+					zdResultSingle.setZendmeid(tailmeid);
+					zdResultSingle.setZendzdid(tailzd);
+					zdResultSingle.setZendptpid(ptp.getPtpobjectid());
+					zdResultSingle.setZendcardid(ptp.getCardobjectid());
+					zdResultSingle.setZendcardmodel(ptp.getCardmodel());
+					zdResultSingle.setZendctp("");
+					
+					zdResultSingle.setRouteType("2");
+					nextZd.addLast(zdResultSingle);
+			}
+			else{
+				logger.info("没有查询到支路口信息：sncid："+ zdResult.getSncid()+ ", cardmodel:" + headcardmodel + ", ptpid:" + headptp) ; 
+				return false;
+			}
+			
+		}
+		
+		if(zdResult.getEmsVendor().equals("华为")){
+		
+			//客户层路径
+			ODU0 odu0 = null;
+			ODU1 odu1 = null;
+			ODU2 odu2 = null;
+			ODU3 odu3 = null;
+			ODU4 odu4 = null;
+			OCH och = null;
+			
+			boolean passMCard = false;
+			Iterator<LinkedList<ZdResultSingle>> iter = allzd.iterator();
+			iter.hasNext();
+			LinkedList<ZdResultSingle> linkedList = iter.next();
+			for (int j = 0; j < linkedList.size(); j++) {
+					ZdResultSingle zdResultSingle = linkedList.get(j);
+					if(mCardmodel.contains(zdResultSingle.getZendcardmodel())){
+						if(!StringUtils.isEmpty(zdResultSingle.getZendctp())){
+							ODU odu = ConstBusiness.getOduByCtp(zdResultSingle.getZendctp());
+							if( odu!=null && odu instanceof OCH ){
+								och = (OCH)odu;
+							}
+						}
+						passMCard = true ;
+					}
+					else{
+						if(passMCard){
+							break ;
+						}
+						else{
+							if(!StringUtils.isEmpty(zdResultSingle.getZendctp())){
+								ODU odu = ConstBusiness.getOduByCtp(zdResultSingle.getZendctp());
+								if( odu!=null && odu instanceof ODU0 ){
+									odu0 = (ODU0)odu;
+								}
+								if( odu!=null && odu instanceof ODU1 ){
+									odu1 = (ODU1)odu;
+								}
+								if( odu!=null && odu instanceof ODU2 ){
+									odu2 = (ODU2)odu;
+								}
+								if( odu!=null && odu instanceof ODU3 ){
+									odu3 = (ODU3)odu;
+								}
+								if( odu!=null && odu instanceof ODU4 ){
+									odu4 = (ODU4)odu;
+								}
+								if( odu!=null && odu instanceof OCH ){
+									och = (OCH)odu;
+								}
+							}
+						}
+					}
+			}
+			
+			String headctp = "/och=1" + "/odu4=1";
+				
+			String oduinfo = zdResult.getODUinfo(input.getRate());
+			logger.info("zdResult-id:" + zdResult.getSncid()  + ", rate: " + input.getRate());
+			logger.info("oduinfo:" + oduinfo );
+			int lastSep = oduinfo.lastIndexOf("/");
+			int firstCommor = oduinfo.lastIndexOf("=")+1;
+			String ctp = oduinfo.substring(lastSep , firstCommor)+ "1";
+			int lastSep2 = oduinfo.lastIndexOf("/");
+			int firstCommor2 = oduinfo.indexOf(",") == -1 ? oduinfo.length():  oduinfo.indexOf(",");
+			headctp = headctp+= oduinfo.substring(lastSep2, firstCommor2);
+				
+			zdResult.setCtpStr(headctp);
+			zdResult.setHeadctpStr(ctp);
+		}
+		else{
+			
+		}
+				
+		return true;
+	}
+	
 	/**
 	 * 将一段路由多个站点，按sepratecount切割
 	 * 比如total=5，sepratecount=1

@@ -13,10 +13,19 @@ public class RouteCalculationResultRouteWrapper {
 	private String layerDesc;
 	private Integer direction;
 	private String ochsncid;
+	private String resultDesc;
 	
 	private ArrayList<RouteCalculationResultRoute> route = new ArrayList<RouteCalculationResultRoute>() ;
 
 	
+	public String getResultDesc() {
+		return resultDesc;
+	}
+
+	public void setResultDesc(String resultDesc) {
+		this.resultDesc = resultDesc;
+	}
+
 	public String getOchsncid() {
 		return ochsncid;
 	}

@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.thoughtworks.xstream.XStream;
 import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
 import com.zznode.opentnms.isearch.model.bo.OCH;
 import com.zznode.opentnms.isearch.model.bo.ODU;

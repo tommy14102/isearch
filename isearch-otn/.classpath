@@ -32,7 +32,5 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/supercontroller/lib/xercesImpl-2.8.1.jar"/>
-	<classpathentry kind="lib" path="/supercontroller/lib/xstream-1.2.2.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

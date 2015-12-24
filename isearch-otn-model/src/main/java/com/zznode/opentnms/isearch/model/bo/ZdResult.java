@@ -37,6 +37,8 @@ public class ZdResult implements Serializable{
 	public String headptpStr = "" ; 
 	public String storeKey = "" ;
 	
+	public String emsVendor ;
+	
 	private LinkedHashMap<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
 
 	
@@ -99,7 +101,13 @@ public class ZdResult implements Serializable{
 		this.trailme = trailme;
 	}
 
+	public String getEmsVendor() {
+		return emsVendor;
+	}
 
+	public void setEmsVendor(String emsVendor) {
+		this.emsVendor = emsVendor;
+	}
 
 	public String getODUinfo( Integer rate ){
 		
@@ -234,7 +242,6 @@ public class ZdResult implements Serializable{
 	public void setCtpStr(String ctpStr) {
 		this.ctpStr = ctpStr;
 	}
-
 
 
 	@Override
