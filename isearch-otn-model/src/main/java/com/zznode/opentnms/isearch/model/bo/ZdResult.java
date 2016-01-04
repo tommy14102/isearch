@@ -38,6 +38,10 @@ public class ZdResult implements Serializable{
 	public String storeKey = "" ;
 	
 	public String emsVendor ;
+	public boolean aendIsFtp ;
+	public boolean zendIsFtp ;
+	public ArrayList<Integer> freeSlots ;
+	
 	
 	private LinkedHashMap<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
 
@@ -49,6 +53,25 @@ public class ZdResult implements Serializable{
 		LinkedList<ZdResultSingle> singleResult =  iter.next();
 		return singleResult;
 	}
+	
+	public ZdResultSingle getZxlwl(){
+		
+		ZdResultSingle rtn = null;
+		
+		Collection<LinkedList<ZdResultSingle>> allzd =  zdmap.values();
+		Iterator<LinkedList<ZdResultSingle>> iter = allzd.iterator(); 
+		iter.hasNext();
+		LinkedList<ZdResultSingle> singleResult =  iter.next();
+		for (int i = 0; i < singleResult.size(); i++) {
+			ZdResultSingle single = singleResult.get(i);
+			if( single.getRouteType().equals(ConstBusiness.routeType_zxlwl) ){
+				rtn = single ; 
+				break ;
+			}
+		}
+		return rtn;
+	}
+	
 	
 	public String getLastMe(){
 		LinkedList<ZdResultSingle> singleResult = null ;
@@ -107,6 +130,14 @@ public class ZdResult implements Serializable{
 
 	public void setEmsVendor(String emsVendor) {
 		this.emsVendor = emsVendor;
+	}
+	
+	public ArrayList<Integer> getFreeSlots() {
+		return freeSlots;
+	}
+
+	public void setFreeSlots(ArrayList<Integer> freeSlots) {
+		this.freeSlots = freeSlots;
 	}
 
 	public String getODUinfo( Integer rate ){
@@ -238,11 +269,26 @@ public class ZdResult implements Serializable{
 	}
 
 
-
 	public void setCtpStr(String ctpStr) {
 		this.ctpStr = ctpStr;
 	}
+	
 
+	public boolean isAendIsFtp() {
+		return aendIsFtp;
+	}
+
+	public void setAendIsFtp(boolean aendIsFtp) {
+		this.aendIsFtp = aendIsFtp;
+	}
+
+	public boolean isZendIsFtp() {
+		return zendIsFtp;
+	}
+
+	public void setZendIsFtp(boolean zendIsFtp) {
+		this.zendIsFtp = zendIsFtp;
+	}
 
 	@Override
 	public String toString() {

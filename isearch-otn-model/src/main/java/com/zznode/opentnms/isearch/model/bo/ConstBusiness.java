@@ -200,7 +200,7 @@ public class ConstBusiness {
 
 	public static void main(String[] args) {
 		Pattern p = Pattern.compile(".*/o[dt]u2=(\\d*)", Pattern.CASE_INSENSITIVE);
-		String ww = "/odu2=2";
+		String ww = "/frequency=195.850/odu2=1/10ge=1";
 		Matcher m = p.matcher(ww);
 		if( m.matches()  ){
 			System.out.println( m.group(1) );

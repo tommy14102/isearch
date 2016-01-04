@@ -58,6 +58,7 @@ public class ResourceManager {
     @PostConstruct
     public void postConstruct1(){
 
+    	/**
     	StringBuilder sb = new StringBuilder();
 	  	sb.append(" SELECT ");
 	  	sb.append(" objectid , parentmeobjectid  ");
@@ -97,6 +98,7 @@ public class ResourceManager {
 	  		logger.info("usedPtpSet2.add: " +  ptplist2.get(i) );
 	  		usedPtpSet.add( ptplist2.get(i));
 		}
+		*/
     }
 	
 	public List<DbEms> getAllEms() throws SQLException{
@@ -254,7 +256,7 @@ public class ResourceManager {
 	  	sb.append(" where wdmsnc.emsobjectid='").append(emsid).append("' ");
 	  	sb.append(" and wdmsnc.objectid = r.objectid  ");
 	  	sb.append(" and r.isdelete='0'  ");
-	  	sb.append(" and rate not in ('40','107','108','109','8042') ");
+	  	sb.append(" and rate not in ('40','107','108','109','8042')  and wdmsnc.objectid = 'UUID:1de234c4-aeac-11e5-8587-0050568478c2' ");
 	  	//sb.append(" and direction = '1' ");
 	  	//sb.append(" and wdmsnc.objectid in ('UUID:51686850-10da-11e5-9c2d-005056862639','UUID:51681a33-10da-11e5-9c2d-005056862639')");
 	  	//sb.append(" and objectid in ('UUID:5169ef20-10da-11e5-9c2d-005056862639','UUID:5169c801-10da-11e5-9c2d-005056862639','UUID:5169a10c-10da-11e5-9c2d-005056862639','UUID:516979c8-10da-11e5-9c2d-005056862639') ");
@@ -267,7 +269,7 @@ public class ResourceManager {
 	  	sb.append(" where wdmsnc.emsobjectid='").append(emsid).append("' ");
 	  	sb.append(" and wdmsnc.objectid = r.objectid  ");
 	  	sb.append(" and r.isdelete='0'  ");
-	  	sb.append(" and rate in ('107','108','109','8042') ");
+	  	sb.append(" and rate in ('107','108','109','8042') and wdmsnc.objectid = 'UUID:1de234c4-aeac-11e5-8587-0050568478c2'");
 	  	sb.append(" and not exists( select 1 from wdmsnc c where c.aendptpobjectid = wdmsnc.aendptpobjectid and c.zendptpobjectid = wdmsnc.zendptpobjectid and c.rate in ('104','105','106','8041') ) ");
 	  	
 	  	
@@ -382,6 +384,98 @@ public class ResourceManager {
 		
 	}
 	
+	public List<ZhiluPtp> query100GZLPtp(String meobjectid ,  String aendptp , String vendor, String direc ,List<String> avaliableCardType)  {
+		
+		StringBuilder sb = new StringBuilder();
+	  	sb.append(" SELECT ");
+	  	sb.append(" ptp.objectid ptpobjectid ,ptp.cardobjectid cardobjectid,card.model cardmodel, ptp.tptype, ptp.ptpid  ");
+	  	sb.append(" FROM ptp,card ");
+	  	sb.append(" where card.meobjectid='").append(meobjectid).append("' ");
+	  	sb.append(" and card.objectid = ptp.cardobjectid ");
+	  	sb.append(" and ptp.tptype = 'PTP' ");
+	  	sb.append(" and ").append( getSqlInStatement("card.model", (String[])avaliableCardType.toArray(new String[avaliableCardType.size()])));
+	  	if( !StringUtils.isEmpty(aendptp) ){
+	  		sb.append(" and ptp.objectid = '").append(aendptp).append("' ");
+	  	}
+	  	//sb.append(" order by card.model ");
+	  	 
+	  	//sb.append(" and not exists(select 1 from wdmsncroute where aendptpobjectid = ptp.objectid) ");
+	  	//sb.append(" and not exists(select 1 from wdmsncroute where zendptpobjectid = ptp.objectid) ");
+	  	
+	  	
+	  	List<ZhiluPtp> zlptplist = dbUtil.getJdbcTemplate().query(sb.toString(), new ZhiluPtpMapper());
+	  	logger.info("查询支路盘信息："+ sb.toString()  );
+	  	logger.info("查询支路盘信息结果："+ zlptplist.size()  );
+	  	
+	  	if( zlptplist==null || zlptplist.size()==0 ){
+	  		avaliableCardType = Arrays.asList( PropertiesHander.getPropertylist("zlportSRate_any") );
+	  		StringBuilder sb2 = new StringBuilder();
+	  		sb2.append(" SELECT ");
+	  		sb2.append(" ptp.objectid ptpobjectid ,ptp.cardobjectid cardobjectid,card.model cardmodel, ptp.tptype, ptp.ptpid  ");
+	  		sb2.append(" FROM ptp,card ");
+	  		sb2.append(" where card.meobjectid='").append(meobjectid).append("' ");
+	  		sb2.append(" and card.objectid = ptp.cardobjectid ");
+	  		sb2.append(" and ptp.tptype = 'PTP' ");
+	  		sb2.append(" and ").append( getSqlInStatement("card.model", (String[])avaliableCardType.toArray(new String[avaliableCardType.size()])));
+	  		if( !StringUtils.isEmpty(aendptp) ){
+	  			sb2.append(" and ptp.objectid = '").append(aendptp).append("' ");
+		  	}
+	  		
+	  		zlptplist = dbUtil.getJdbcTemplate().query(sb2.toString(), new ZhiluPtpMapper());
+	  		logger.info("查询支路盘信息any："+ sb2.toString()  );
+	  	}
+	  	
+	  	if( zlptplist!=null && zlptplist.size()> 0){
+	  		logger.info("usedPtpSet checksize："+ zlptplist.size()  );
+	  		for (Iterator<ZhiluPtp> iter= zlptplist.iterator(); iter.hasNext();) {
+				ZhiluPtp zhiluPtp = iter.next();
+				logger.info("usedPtpSet check："+ zhiluPtp.getPtpobjectid()  );
+				if( usedPtpSet.contains( zhiluPtp.getPtpobjectid())){
+					logger.info("usedPtpSet check result true "  );
+					iter.remove();
+					continue;
+				}
+				
+				if(vendor.equals("中兴")){
+					//判断ptpid的direction和type
+					Pattern pattern = Pattern.compile("^/direction=(\\w+)/rack=\\d+/shelf=\\d+/slot=\\d+/type=\\w+_(\\w+)/port=\\d+$");
+					Matcher matcher = pattern.matcher(zhiluPtp.getPtpid());
+					boolean b= matcher.matches();
+					if(!b){
+						continue;
+					}
+					matcher.reset();
+					matcher.find();
+						
+					String direction = matcher.group(1);
+					String type = matcher.group(2);
+
+					if(direc.equals("0")){
+						if(!direction.equalsIgnoreCase("sink")){
+							continue;
+						}
+						if(!type.equalsIgnoreCase("so")){
+							continue;
+						}
+					}
+					else{
+						if(!direction.equalsIgnoreCase("src")){
+							continue;
+						}
+						if(!type.equalsIgnoreCase("si")){
+							continue;
+						}
+					}
+					
+				}
+			}
+	  		logger.info("usedPtpSet checksize2："+ zlptplist.size()  );
+	  	}
+	  	
+	  	return zlptplist;
+		
+	}
+
 	
 	public List<ZhiluPtp> queryZLClinetPtp(String zlptpobjectid, String aendptp ) {
 		

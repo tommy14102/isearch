@@ -17,8 +17,8 @@ public class DbTsnMapper implements RowMapper<DbTsn> {
 		tsn.setUserLabel( resultset.getString("userLabel"));
 		tsn.setParentObjectId( resultset.getString("parentObjectId"));
 		tsn.setCreateUserName( resultset.getString("createUserName"));
-		tsn.setxOffSet( resultset.getInt("xOffSet"));
-		tsn.setyOffSet( resultset.getInt("yOffSet"));
+		//tsn.setxOffSet( resultset.getInt("xOffSet"));
+		//tsn.setyOffSet( resultset.getInt("yOffSet"));
 		
 		return tsn  ; 
 		

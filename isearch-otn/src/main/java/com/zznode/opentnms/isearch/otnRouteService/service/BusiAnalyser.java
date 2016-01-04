@@ -93,7 +93,7 @@ public class BusiAnalyser {
 	private void queryZdWmdsnc(String emsid) {
 		
 		emsDataMap = resourceManager.getZdWmdsnc(emsid);
-		ochData = resourceManager.getAllOch(emsid);
+		//ochData = resourceManager.getAllOch(emsid);
 	}
 
 	public void analyseAllBusi() throws Exception {

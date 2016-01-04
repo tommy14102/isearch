@@ -14,8 +14,15 @@ public class RouteCalculationResultRoute {
 	private String ztimeSlots;
 	private String additionalInfo;
 	private String routeType;
+	private String freeslot;
 	
 	
+	public String getFreeslot() {
+		return freeslot;
+	}
+	public void setFreeslot(String freeslot) {
+		this.freeslot = freeslot;
+	}
 	public String getRouteType() {
 		return routeType;
 	}

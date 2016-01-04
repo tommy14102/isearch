@@ -21,6 +21,9 @@ public class ZdResultSingle implements Serializable{
 	private String aendctp;
 	private String zendctp;
 	
+	private String aendctpNumber;
+	private String zendctpNumber;
+	
 	private String routeType;
 	
 	public String getRouteType() {
@@ -100,6 +103,18 @@ public class ZdResultSingle implements Serializable{
 	}
 	public void setZendcardmodel(String zendcardmodel) {
 		this.zendcardmodel = zendcardmodel;
+	}
+	public String getAendctpNumber() {
+		return aendctpNumber;
+	}
+	public void setAendctpNumber(String aendctpNumber) {
+		this.aendctpNumber = aendctpNumber;
+	}
+	public String getZendctpNumber() {
+		return zendctpNumber;
+	}
+	public void setZendctpNumber(String zendctpNumber) {
+		this.zendctpNumber = zendctpNumber;
 	}
 	
 	
