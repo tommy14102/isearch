@@ -62,6 +62,7 @@ public class ConstBusiness {
 		rateMap.put(8043, 5);//100G
 		
 		odukMap.put(8031, 1);//odu0
+		odukMap.put(10105, 1);//odu0
 		odukMap.put(104, 2);//odu1
 		odukMap.put(107, 2);//otu1
 		odukMap.put(105, 3);//odu2
@@ -70,7 +71,6 @@ public class ConstBusiness {
 		odukMap.put(109, 4);//otu3
 		odukMap.put(8041, 5);//odu4
 		odukMap.put(8042, 5);//otu4
-		
 		odukMap.put(40, 6);//och
 		
 		rateDescMap.put(50, "GE");
@@ -96,6 +96,7 @@ public class ConstBusiness {
 		 
 		
 		odu0rateList.add(8031); // LR_OCH_Data_Unit_0
+		odu0rateList.add(10105); // LR_OCH_Data_Unit_0
 		odu1rateList.add(104); // LR_OCH_Data_Unit_1
 		odu1rateList.add(107); // LR_OCH_Data_Unit_1
 		odu2rateList.add(105); // LR_OCH_Data_Unit_2
@@ -206,5 +207,6 @@ public class ConstBusiness {
 			System.out.println( m.group(1) );
 		}
 	}
+
 
 }

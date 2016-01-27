@@ -1711,12 +1711,14 @@ public class RouteCalculationImpl implements RouteCalculation{
 		mCardmodel.add("12M40V");
 		mCardmodel.add("13M40");
 		mCardmodel.add("13M40V");
+		mCardmodel.add("OCI");
 		
 		List<String> dCardmodel = resourceManager.getDCardModel();
 		dCardmodel.add("12D40");
 		dCardmodel.add("12D40V");
 		dCardmodel.add("13D40");
 		dCardmodel.add("13D40V");
+		dCardmodel.add("OCI");
 		
 		String[] nCardmodel = resourceManager.getNCardModel();
 		String[] tCardmodel = resourceManager.getTCardModel();
@@ -2065,8 +2067,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 			}
 			
 			for (int j = 1; j < all.length; j++) {
-				int a = all[j];
-				if( !flist.contains(a) ){
+				if( !flist.contains(j) ){
 					all[j] = 0;
 				}
 			}
@@ -2076,7 +2077,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 		for (int i = 1; i < all.length; i++) {
 			int r = all[i];
 			if( r == 1 ){
-				freeslot = r ; 
+				freeslot = i ; 
 				break;
 			}
 		}

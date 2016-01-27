@@ -9,21 +9,24 @@ public class ODU0 extends ODU{
 	
 	public void assignOchSncid(String ochsncobjectid){
 		this.setOchSncid(ochsncobjectid);
-		dsr.assignOchSncid(ochsncobjectid);
+		if(dsr!=null){
+			dsr.assignOchSncid(ochsncobjectid);
+		}
+		
 	}
 
 	public String getFreeODU(Integer rate_i){
 		Integer ratelevel = ConstBusiness.rateMap.get(rate_i);
 		if( ratelevel!=null && ratelevel.intValue() == 0 ){
 			if( dsr==null ){
-				return "/odu0" + index ; 
+				return "/odu0=" + index ; 
 			}
 		}
 		
 		Integer odulevel = ConstBusiness.odukMap.get(rate_i);
 		if( odulevel!=null && ratelevel.intValue() == 1 ){
 			if( dsr==null ){
-				return "/odu0" + index ; 
+				return "/odu0=" + index ; 
 			}
 		}
 		

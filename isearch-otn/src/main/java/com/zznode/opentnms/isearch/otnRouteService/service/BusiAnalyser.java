@@ -93,7 +93,7 @@ public class BusiAnalyser {
 	private void queryZdWmdsnc(String emsid) {
 		
 		emsDataMap = resourceManager.getZdWmdsnc(emsid);
-		//ochData = resourceManager.getAllOch(emsid);
+		ochData = resourceManager.getAllOch(emsid);
 	}
 
 	public void analyseAllBusi() throws Exception {
@@ -1227,7 +1227,7 @@ public class BusiAnalyser {
 		if( passedOdu instanceof ODU0){
 			ODU0 odu0 = (ODU0)passedOdu;
 			DSR dsr = odu0.getDsr();
-			if( dsrlist!=null && dsrlist.size()>0){
+			if( dsr!=null && dsrlist!=null && dsrlist.size()>0){
 				for (Iterator<DSR> iter = dsrlist.iterator(); iter.hasNext();) {
 					DSR dsr_ori = iter.next();
 					if( dsr_ori.getSncobjectid().equals(dsr.getSncobjectid())){
@@ -1621,7 +1621,7 @@ public class BusiAnalyser {
 		
 		Set<String> dealedSet = new HashSet<String>();
 		
-		List wdmsnclist = new ArrayList<DbWdmSncAll>();
+		List<DbWdmSncAll> wdmsnclist = new ArrayList<DbWdmSncAll>();
 		
 		//1.查询两个站点之间的正向单向波道。
 		String key = aendZDid + "|" + zendZDid ;
@@ -1797,94 +1797,86 @@ public class BusiAnalyser {
 	  		
 			if( !wdmsnc.getLayerdesc().equals( Rate.och.getName()) ){
 				
-				if( wdmsnc.getLayerdesc().equals( Rate.odu4.getName() ) ){
-					ODU4 odu4 = new ODU4();
-					odu4.setIndex(1);
-					
-					odu4.setRate(wdmsnc.getRate());
-					odu4.setSncobjectid(wdmsnc.getObjectId());
-					wdmsnc.setOdu(odu4);
+				ODU sncodu = null;
+				try {
+					sncodu = ConstBusiness.getOduByCtp(wdmsnc.getHeadctpSer());
+				} catch (Exception e) {
+					logger.error("分析CTP失败,ctp:" + wdmsnc.getHeadctpSer() + ",sncid:"+ wdmsnc.getObjectId());
 				}
-				else{
-					ODU sncodu = null;
-					try {
-						sncodu = ConstBusiness.getOduByCtp(wdmsnc.getHeadctpSer());
-					} catch (Exception e) {
-						logger.error("分析CTP失败,ctp:" + wdmsnc.getHeadctpSer() + ",sncid:"+ wdmsnc.getObjectId());
-					}
-					if( sncodu==null){
-						//continue;
-						if( wdmsnc.getLayerdesc().equals( Rate.odu2.getName() ) ){
-							ODU2 odu2 = new ODU2();
-							odu2.setIndex(1);
-							
-							odu2.setRate(wdmsnc.getRate());
-							odu2.setSncobjectid(wdmsnc.getObjectId());
-							wdmsnc.setOdu(odu2);
-						}
-						
-					}
-					else{
-						sncodu.setRate(wdmsnc.getRate());
-						sncodu.setSncobjectid(wdmsnc.getObjectId());
-						wdmsnc.setOdu(sncodu);
-					}
-					
+				
+				if( sncodu==null){
+					sncodu = getDefaultOduByCtp( wdmsnc.getLayerdesc() );
 				}
+				sncodu.setRate(wdmsnc.getRate());
+				sncodu.setSncobjectid(wdmsnc.getObjectId());
+				wdmsnc.setOdu(sncodu);
 			}
 	   		
 			if( wdmsnc.getLayerdesc().equals( Rate.client.getName() ) ){
-				if(wdmsnc.getOdu() instanceof DSR){
-					wdmsncClientResult.add(wdmsnc);
-				}
-				else{
+				
+				wdmsncClientResult.add(wdmsnc);
+				if( !(wdmsnc.getOdu() instanceof DSR)){
 					logger.warn("warning: clientrate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
-					DSR dsr = new DSR();
-					dsr.setIndex(wdmsnc.getOdu().getIndex());
-					dsr.setRate(wdmsnc.getRate());
-					dsr.setSncobjectid(wdmsnc.getObjectId());
-					wdmsnc.setOdu(dsr);
-					wdmsncClientResult.add(wdmsnc);
+					ODU sncodu = getDefaultOduByCtp( wdmsnc.getLayerdesc() );
+					sncodu.setIndex(wdmsnc.getOdu().getIndex());
+					sncodu.setRate(wdmsnc.getRate());
+					sncodu.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(sncodu);
 				}
 		   	}
 			else if( wdmsnc.getLayerdesc().equals( Rate.odu0.getName())){
-				if(wdmsnc.getOdu() instanceof ODU0){
-					wdmsncOdu0Result.add(wdmsnc);
-				}
-				else{
+				wdmsncOdu0Result.add(wdmsnc);
+				if( !(wdmsnc.getOdu() instanceof ODU0)){
 					logger.error("odu0rate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
+					ODU sncodu = getDefaultOduByCtp( wdmsnc.getLayerdesc() );
+					sncodu.setIndex(wdmsnc.getOdu().getIndex());
+					sncodu.setRate(wdmsnc.getRate());
+					sncodu.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(sncodu);
 				}
 			}
 			else if( wdmsnc.getLayerdesc().equals( Rate.odu1.getName())){
-				if(wdmsnc.getOdu() instanceof ODU1){
-					wdmsncOdu1Result.add(wdmsnc);
-				}
-				else{
+				wdmsncOdu1Result.add(wdmsnc);
+				if( !(wdmsnc.getOdu() instanceof ODU1)){
 					logger.error("odu1rate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
+					ODU sncodu = getDefaultOduByCtp( wdmsnc.getLayerdesc() );
+					sncodu.setIndex(wdmsnc.getOdu().getIndex());
+					sncodu.setRate(wdmsnc.getRate());
+					sncodu.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(sncodu);
 				}
 			}
 			else if( wdmsnc.getLayerdesc().equals( Rate.odu2.getName())){
-				if(wdmsnc.getOdu() instanceof ODU2){
-					wdmsncOdu2Result.add(wdmsnc);
-				}
-				else{
+				wdmsncOdu2Result.add(wdmsnc);
+				if( !(wdmsnc.getOdu() instanceof ODU2)){
 					logger.error("odu2rate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
+					ODU sncodu = getDefaultOduByCtp( wdmsnc.getLayerdesc() );
+					sncodu.setIndex(wdmsnc.getOdu().getIndex());
+					sncodu.setRate(wdmsnc.getRate());
+					sncodu.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(sncodu);
 				}
 			}
 			else if( wdmsnc.getLayerdesc().equals( Rate.odu3.getName())){
-				if(wdmsnc.getOdu() instanceof ODU3){
-					wdmsncOdu3Result.add(wdmsnc);
-				}
-				else{
+				wdmsncOdu3Result.add(wdmsnc);
+				if( !(wdmsnc.getOdu() instanceof ODU3)){
 					logger.error("odu3rate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
+					ODU sncodu = getDefaultOduByCtp( wdmsnc.getLayerdesc() );
+					sncodu.setIndex(wdmsnc.getOdu().getIndex());
+					sncodu.setRate(wdmsnc.getRate());
+					sncodu.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(sncodu);
 				}
 			}
 			else if( wdmsnc.getLayerdesc().equals( Rate.odu4.getName())){
-				if(wdmsnc.getOdu() instanceof ODU4){
-					wdmsncOdu4Result.add(wdmsnc);
-				}
-				else{
+				wdmsncOdu4Result.add(wdmsnc);
+				if( !(wdmsnc.getOdu() instanceof ODU4)){
 					logger.error("odu4rate, bad ctp route. sncid:"+ wdmsnc.getObjectId());
+					ODU sncodu = getDefaultOduByCtp( wdmsnc.getLayerdesc() );
+					sncodu.setIndex(wdmsnc.getOdu().getIndex());
+					sncodu.setRate(wdmsnc.getRate());
+					sncodu.setSncobjectid(wdmsnc.getObjectId());
+					wdmsnc.setOdu(sncodu);
 				}
 			}
 			else if( wdmsnc.getLayerdesc().equals( Rate.och.getName())){
@@ -2100,6 +2092,35 @@ public class BusiAnalyser {
 	  	
 	}
 	
-	
+	public static ODU getDefaultOduByCtp(String layerdesc) {
+
+		if( layerdesc.equals( Rate.odu1.getName() ) ){
+			ODU1 odu1 = new ODU1();
+			odu1.setIndex(1);
+			return odu1 ; 
+		}
+		else if( layerdesc.equals( Rate.odu2.getName() ) ){
+			ODU2 odu2 = new ODU2();
+			odu2.setIndex(1);
+			return odu2 ; 
+		}
+		else if( layerdesc.equals( Rate.odu3.getName() ) ){
+			ODU3 odu3 = new ODU3();
+			odu3.setIndex(1);
+			return odu3 ; 
+		}
+		else if( layerdesc.equals( Rate.odu4.getName() ) ){
+			ODU4 odu4 = new ODU4();
+			odu4.setIndex(1);
+			return odu4 ; 
+		}
+		else if( layerdesc.equals( Rate.client.getName() ) ){
+			DSR dsr = new DSR();
+			dsr.setIndex(1);
+			return dsr;
+		}
+		
+		return null;
+	}
 	
 }

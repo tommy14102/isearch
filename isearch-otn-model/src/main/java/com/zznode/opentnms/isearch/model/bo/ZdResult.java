@@ -309,8 +309,10 @@ public class ZdResult implements Serializable{
 		if( odu instanceof ODU0){
 			ODU0 odu0 = (ODU0)odu;
 			DSR dsr = odu0.getDsr();
-			sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
-			sb.append(" ZdResult [DSR-Free-Resource:"+ odu0.getFreeODU(87)).append("\r\n");
+			if(dsr!=null){
+				sb.append(" ZdResult [DSR:"+ dsr.getClass().getSimpleName()  + ",DSRrate:").append(dsr.getRate()+ ",RateDesc:").append(ConstBusiness.rateDescMap.get(dsr.getRate())+",DSRsncid:").append(dsr.getSncobjectid()).append("]").append("\r\n");
+				sb.append(" ZdResult [DSR-Free-Resource:"+ odu0.getFreeODU(87)).append("\r\n");
+			}
 		}
 		
 		if( odu instanceof ODU1){
