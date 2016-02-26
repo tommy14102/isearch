@@ -5,9 +5,16 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType( propOrder = {"work", "work_reverse" })
 public class RouteCalculationResultWrapper {
 
+	private  String resultid;
 	private  RouteCalculationResult work ;
 	private  RouteCalculationResult work_reverse ;
 	
+	public String getResultid() {
+		return resultid;
+	}
+	public void setResultid(String resultid) {
+		this.resultid = resultid;
+	}
 	public RouteCalculationResult getWork() {
 		return work;
 	}

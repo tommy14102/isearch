@@ -241,17 +241,59 @@ public class RouteCalculationImpl implements RouteCalculation{
 				}else{
 					break ; 
 				}
+				result.setResultid(UuidUtil.randomUUID());
+				
+				//将结果存储到memcache中，准备预占,过期时间为24小时
+				int exptime = 24*60*60;
+				cachedClient.set( result.getResultid(), exptime, "0" );
+				
+				ArrayList<String> snclist = new ArrayList<String>();
+				ArrayList<String> zlptplist = new ArrayList<String>();
+				ArrayList<RouteCalculationResultRouteWrapper> routelist = result.getWork().getRouteCalculationResultRouteWrapper();
+				for (int i = 0; i < routelist.size(); i++) {
+					RouteCalculationResultRouteWrapper wapper = routelist.get(i);
+					
+					//将snc做准备处理
+					snclist.add( wapper.getSncid() );
+					
+					//将支路口信息做准备处理
+					ArrayList<RouteCalculationResultRoute> rlist = wapper.getRoute();
+					for (int j = 0; j < rlist.size(); j++) {
+						RouteCalculationResultRoute route = rlist.get(j);
+						if( route.getRouteType().equals( ConstBusiness.routeType_zxlwl) ){
+							zlptplist.add( route.getAendptpobjectid());
+							zlptplist.add( route.getZendptpobjectid());
+						}
+					}
+				}
+				
+				ArrayList<RouteCalculationResultRouteWrapper> routelistReverse = result.getWork_reverse().getRouteCalculationResultRouteWrapper();
+				for (int i = 0; i < routelistReverse.size(); i++) {
+					RouteCalculationResultRouteWrapper wapper = routelistReverse.get(i);
+					
+					//将snc做准备处理
+					snclist.add( wapper.getSncid() );
+					
+					//将支路口信息做准备处理
+					ArrayList<RouteCalculationResultRoute> rlist = wapper.getRoute();
+					for (int j = 0; j < rlist.size(); j++) {
+						RouteCalculationResultRoute route = rlist.get(j);
+						if( route.getRouteType().equals( ConstBusiness.routeType_zxlwl) ){
+							zlptplist.add( route.getAendptpobjectid());
+							zlptplist.add( route.getZendptpobjectid());
+						}
+					}
+				}
+				
+				cachedClient.set( result.getResultid()+"|sncs", exptime, snclist );
+				cachedClient.set( result.getResultid()+"|zlptps", exptime, zlptplist );
+				
 				routeCalculationResultWrapper.add(result);
 			} 
 			
 			logger.info("total,size: " + routeCalculationResultWrapper.size());
 			output.setRouteCalculationResultWrapper(routeCalculationResultWrapper);
 			
-			for (int i = 0; i < routeCalculationResultWrapper.size(); i++) {
-				RouteCalculationResultWrapper rrw = routeCalculationResultWrapper.get(i);
-				assignDesc(rrw);
-				
-			}
 			
 			return output;
 			
@@ -265,22 +307,6 @@ public class RouteCalculationImpl implements RouteCalculation{
 		
 	}
 	
-	private void assignDesc(RouteCalculationResultWrapper rrw) {
-
-		RouteCalculationResult rc = rrw.getWork(); 
-		ArrayList<RouteCalculationResultRouteWrapper> rwrapperlist = rc.getRouteCalculationResultRouteWrapper();
-		for (int i = 0; i < rwrapperlist.size(); i++) {
-			RouteCalculationResultRouteWrapper  way = rwrapperlist.get(i);
-			ArrayList<RouteCalculationResultRoute> routelist = way.getRoute();
-			RouteCalculationResultRoute head =  routelist.get(0);
-			RouteCalculationResultRoute tail =  routelist.get(routelist.size()-1);
-			
-			if( ConstBusiness.routeType_zxlwl.equals( head.getRouteType())){
-				
-			}
-		}
-		
-	}
 
 	private void filterSameBigMe(List<RouteCalculationResult> resultZD,	List<RouteCalculationResult> resultJP) {
 		
@@ -392,6 +418,13 @@ public class RouteCalculationImpl implements RouteCalculation{
 		if( resultlist.size() > 0 ){
 			
 			logger.info("查询直达路径，缓存中结果:" + resultlist);
+			
+			//根据预占进行过滤
+			filterByOccupy(resultlist );
+			if( resultlist.size() == 0 ){
+				return null ; 
+			}
+			logger.info("查询直达路径，根据预占进行过滤后数量:" + resultlist.size());
 			
 			//根据az端网元进行过滤
 			filterZDResult(resultlist, aendmelist , zendmelist );
@@ -533,6 +566,26 @@ public class RouteCalculationImpl implements RouteCalculation{
 		return null;
 	}
 	
+	private void filterByOccupy(List<ZdResult> resultlist) {
+		
+		for (Iterator<ZdResult> zditerator = resultlist.iterator(); zditerator.hasNext();) {
+			ZdResult zdResult =  zditerator.next();
+			
+			if(zdResult==null){
+				System.out.println(000);
+				continue;
+			}
+			
+			String state = (String)cachedClient.get( zdResult.getSncid()+"|state"  );
+			if( state!=null && (state.equals("1")||state.equals("2")) ){
+				zditerator.remove();
+				logger.info("根据预占进行过滤:" + zdResult.getSncid() );
+				continue;
+			}
+		}
+	}
+
+
 	private void filterZDResultByDunlicateMe(List<ZdResult> resultlist, RouteCalculationInput input) {
 
 		HashSet<TreeSet<String>> passedMes = new HashSet<TreeSet<String>>();
@@ -1712,6 +1765,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 		mCardmodel.add("13M40");
 		mCardmodel.add("13M40V");
 		mCardmodel.add("OCI");
+		mCardmodel.add("OCI(10A5H)");
 		
 		List<String> dCardmodel = resourceManager.getDCardModel();
 		dCardmodel.add("12D40");
@@ -1719,6 +1773,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 		dCardmodel.add("13D40");
 		dCardmodel.add("13D40V");
 		dCardmodel.add("OCI");
+		mCardmodel.add("OCI(10A5H)");
 		
 		String[] nCardmodel = resourceManager.getNCardModel();
 		String[] tCardmodel = resourceManager.getTCardModel();
@@ -1892,7 +1947,7 @@ public class RouteCalculationImpl implements RouteCalculation{
 						String meobjectid = lastNT.getAendmeid();
 						String aendptp = lastNT.getAendptpid();
 						String vendor = preverios.getEmsVendor();
-						
+
 						List<ZhiluPtp> zlptplist = resourceManager.query100GZLPtp(meobjectid, aendptp, vendor, "1", avaliable100GCardType);
 						if( zlptplist!=null && zlptplist.size()>0 ){
 							ZhiluPtp ptp = zlptplist.get(0);
@@ -1904,9 +1959,9 @@ public class RouteCalculationImpl implements RouteCalculation{
 							lastNT.setZendcardmodel(ptp.getCardmodel());
 							
 							if( preverios.getEmsVendor().endsWith("中兴")){
-								String aendctp = resourceManager.getCtpByPtp(lastNT.getAendptpid());
+								String aendctp = resourceManager.getCtpByPtp(lastNT.getAendptpid(),input.getRate());
 								lastNT.setAendctp( aendctp );
-								String zendctp = resourceManager.getCtpByPtp(lastNT.getZendptpid());
+								String zendctp = resourceManager.getCtpByPtp(lastNT.getZendptpid(),input.getRate());
 								lastNT.setZendctp( zendctp );
 							}
 						}
@@ -1950,9 +2005,9 @@ public class RouteCalculationImpl implements RouteCalculation{
 							zdResultSingle.setRouteType( ConstBusiness.routeType_zxlwl);
 							
 							if( zdResult.getEmsVendor().endsWith("中兴")){
-								String aendctp = resourceManager.getCtpByPtp(zdResultSingle.getAendptpid());
+								String aendctp = resourceManager.getCtpByPtp(zdResultSingle.getAendptpid(),input.getRate());
 								zdResultSingle.setAendctp( aendctp );
-								String zendctp = resourceManager.getCtpByPtp(zdResultSingle.getZendptpid());
+								String zendctp = resourceManager.getCtpByPtp(zdResultSingle.getZendptpid(),input.getRate());
 								zdResultSingle.setZendctp( zendctp );
 							}
 							
@@ -1988,9 +2043,9 @@ public class RouteCalculationImpl implements RouteCalculation{
 					zdResultSingleLast.setRouteType( ConstBusiness.routeType_zxlwl);
 					
 					if( zdResult.getEmsVendor().endsWith("中兴")){
-						String aendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getAendptpid());
+						String aendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getAendptpid(),input.getRate());
 						zdResultSingleLast.setAendctp( aendctp );
-						String zendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getZendptpid());
+						String zendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getZendptpid(),input.getRate());
 						zdResultSingleLast.setZendctp( zendctp );
 					}
 					
@@ -2017,9 +2072,9 @@ public class RouteCalculationImpl implements RouteCalculation{
 				zdResultSingle.setRouteType( ConstBusiness.routeType_zxlwl);
 				
 				if( zdResult.getEmsVendor().endsWith("中兴")){
-					String aendctp = resourceManager.getCtpByPtp(zdResultSingle.getAendptpid());
+					String aendctp = resourceManager.getCtpByPtp(zdResultSingle.getAendptpid(),input.getRate());
 					zdResultSingle.setAendctp( aendctp );
-					String zendctp = resourceManager.getCtpByPtp(zdResultSingle.getZendptpid());
+					String zendctp = resourceManager.getCtpByPtp(zdResultSingle.getZendptpid(),input.getRate());
 					zdResultSingle.setZendctp( zendctp );
 				}
 				
@@ -2045,9 +2100,9 @@ public class RouteCalculationImpl implements RouteCalculation{
 			zdResultSingleLast.setRouteType( ConstBusiness.routeType_zxlwl);
 			
 			if( zdResult.getEmsVendor().endsWith("中兴")){
-				String aendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getAendptpid());
+				String aendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getAendptpid(),input.getRate());
 				zdResultSingleLast.setAendctp( aendctp );
-				String zendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getZendptpid());
+				String zendctp = resourceManager.getCtpByPtp(zdResultSingleLast.getZendptpid(),input.getRate());
 				zdResultSingleLast.setZendctp( zendctp );
 			}
 			

@@ -68,8 +68,6 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	excludeMelist = excludeMelist==null ? new ArrayList<String>() : excludeMelist ; 
 	    	excludePtplist = excludePtplist==null ? new ArrayList<String>() : excludePtplist ; 
 	    	
-	    	
-	    	
 	    	int routeCount = (Integer)param.getAttrMap().get("routeCount");
 	    	List<CaculatorResultWay> rtnlist = new ArrayList<CaculatorResultWay>();
 	    	int i = 0;
@@ -156,18 +154,6 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 	    	String zendptp = (String)param.getAttrMap().get("zendptp");
 	    	String zendctp = (String)param.getAttrMap().get("zendctp");
 	    	
-	    	boolean tmodel = false ; 
-	    	if(  aendindex == 1 && zendindex == 6  ){
-				System.out.println(111);
-				tmodel = true ; 
-			}
-			
-			if( aendindex == 6 && zendindex == 1  ){
-				System.out.println(222);
-				tmodel = true ; 
-			}
-			
-	    	
 	    	//禁止网元
 	    	List<String> excludeMelist = (List<String>)param.getAttrMap().get("excludeMelist");
 	    	//禁止端口
@@ -193,20 +179,17 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+ link.getLinkindex();
 					ZdResult zdResult = (ZdResult)cacheClient.get(key);
 					
-					if(tmodel){
-					if(zdResult.getSncid().equals("UUID:51681a33-10da-11e5-9c2d-005056862639") || zdResult.getSncid().equals("UUID:51686850-10da-11e5-9c2d-005056862639")){
-						
-					}
-					else{
-						//iter.remove();
-						//continue;
-					}
-					}
 					
 					if(zdResult==null){
 						System.out.println(666);
 						continue;
 					}
+					
+					String state = (String)cacheClient.get( zdResult.getSncid()+"|state"  );
+					if( state!=null && (state.equals("1")||state.equals("2")) ){
+						continue;
+					}
+					
 					
 					//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 					Map<String, LinkedList<ZdResultSingle>> zdmap =  zdResult.getZdmap();
@@ -260,17 +243,13 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					String key = "OTN_RESOURECE_OTNLink" + "|" +sec.getAendNode()+"|"+sec.getZendNode()+"|"+  link.getLinkindex();
 					ZdResult zdResult = (ZdResult)cacheClient.get(key);
 					
-					if(tmodel){
-						if(zdResult.getSncid().equals("UUID:51681a33-10da-11e5-9c2d-005056862639") || zdResult.getSncid().equals("UUID:51686850-10da-11e5-9c2d-005056862639")){
-							
-						}
-						else{
-							//iter.remove();
-							//continue;
-						}
-						}
 					if(zdResult==null){
 						System.out.println(777);
+						continue;
+					}
+					
+					String state = (String)cacheClient.get( zdResult.getSncid()+"|state"  );
+					if( state!=null && (state.equals("1")||state.equals("2")) ){
 						continue;
 					}
 					
@@ -341,9 +320,11 @@ public class Dijkstra4OtnV2 extends AlgorithmProcessor {
 					System.out.println(888);
 					continue;
 				}
-	    		if( zdResult.getSncid().equals("UUID:51688f91-10da-11e5-9c2d-005056862639")){
-	    			System.out.println(234);
-	    		}
+	    		String state = (String)cacheClient.get( zdResult.getSncid()+"|state"  );
+				if( state!=null && (state.equals("1")||state.equals("2")) ){
+					continue;
+				}
+				
 	    		//ZdResult zdResult = (ZdResult)link.getAttrMap().get("ZdResultInfo");
 	    		//判断是否有可用资源
 	    		if(zdResult.getODUinfo(param.getRate()).equals("")){

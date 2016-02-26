@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import com.zznode.opentnms.isearch.model.bo.ConstBusiness;
 import com.zznode.opentnms.isearch.otnRouteService.api.model.CardUsedPtpInfo;
 import com.zznode.opentnms.isearch.otnRouteService.api.model.CardUsedPtpOutput;
+import com.zznode.opentnms.isearch.otnRouteService.cache.CachedClient;
 import com.zznode.opentnms.isearch.otnRouteService.db.DBUtil;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbEmsMapper;
 import com.zznode.opentnms.isearch.otnRouteService.db.mapper.DbMeMapper;
@@ -49,6 +50,9 @@ import com.zznode.opentnms.isearch.otnRouteService.util.PropertiesHander;
 @Component
 public class ResourceManager {
 
+	@Autowired
+	public CachedClient cachedClient;
+	
 	@Autowired
 	public DBUtil dbUtil;
 	
@@ -344,6 +348,12 @@ public class ResourceManager {
 					continue;
 				}
 				
+				String ptpstate = (String)cachedClient.get( zhiluPtp.getPtpobjectid()+"|state" );
+				if( ptpstate!=null && (ptpstate.equals("1")||ptpstate.equals("2"))){
+					iter.remove();
+					continue;
+				}
+				
 				if(vendor.equals("中兴")){
 					//判断ptpid的direction和type
 					Pattern pattern = Pattern.compile("^/direction=(\\w+)/rack=\\d+/shelf=\\d+/slot=\\d+/type=\\w+_(\\w+)/port=\\d+$");
@@ -432,6 +442,12 @@ public class ResourceManager {
 				logger.info("usedPtpSet check："+ zhiluPtp.getPtpobjectid()  );
 				if( usedPtpSet.contains( zhiluPtp.getPtpobjectid())){
 					logger.info("usedPtpSet check result true "  );
+					iter.remove();
+					continue;
+				}
+				
+				String ptpstate = (String)cachedClient.get( zhiluPtp.getPtpobjectid()+"|state" );
+				if( ptpstate!=null && (ptpstate.equals("1")||ptpstate.equals("2"))){
 					iter.remove();
 					continue;
 				}
@@ -592,6 +608,13 @@ public class ResourceManager {
 							iter.remove();
 							continue;
 						}
+						
+						String ptpstate = (String)cachedClient.get( zhiluPtp.getPtpobjectid()+"|state" );
+						if( ptpstate!=null && (ptpstate.equals("1")||ptpstate.equals("2"))){
+							iter.remove();
+							continue;
+						}
+						
 						//判断ptpid的direction和type
 						Pattern pattern = Pattern.compile("^/direction=(\\w+)/rack=\\d+/shelf=\\d+/slot=\\d+/type=\\w+_(\\w+)/port=\\d+$");
 						Matcher matcher = pattern.matcher(zhiluPtp.getPtpid());
@@ -940,14 +963,39 @@ public class ResourceManager {
 	  	
 	}
 
-	public String getCtpByPtp(String ptpobjectid) {
+	public String getCtpByPtp(String ptpobjectid, Integer rate) {
 		
+		String ratedesc ="";
+		Integer level = ConstBusiness.rateMap.get(rate);
+		if(level==null){
+			level = ConstBusiness.odukMap.get(rate);
+		}
+		if( level.intValue() == 0 ){
+			ratedesc = "" ; 
+		}
+		else if( level.intValue() == 1 ){
+			ratedesc = "" ; 
+		}
+		else if( level.intValue() == 2 ){
+			ratedesc = "2.5" ; 
+		}
+		else if( level.intValue() == 3 ){
+			ratedesc = "10" ; 
+		}
+		else if( level.intValue() == 4 ){
+			ratedesc = "40" ; 
+		}
+		else if( level.intValue() == 5 ){
+			ratedesc = "100" ; 
+		}
 		StringBuilder sb = new StringBuilder();
 	  	sb.append(" SELECT ");
 	  	sb.append(" ctpid  ");
 	  	sb.append(" FROM ctp ");
 	  	sb.append(" where ptpobjectid ='").append(ptpobjectid).append("' ");
+		sb.append(" and ctpid like '%").append(ratedesc+"ge").append("%'");
 	  	
+	  	logger.info("get ctpid sql:" + sb.toString());
 	  	try {
 			return dbUtil.getJdbcTemplate().queryForObject(sb.toString(), String.class);
 		} catch (EmptyResultDataAccessException e) {

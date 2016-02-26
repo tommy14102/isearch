@@ -2016,7 +2016,7 @@ public class BusiAnalyser {
 	  			//continue ;
 	  		}
 	  		
-	  		if (wdmsnc.getOdu()  instanceof OCH) {
+	  		if (wdmsnc.getOdu() instanceof OCH) {
 	    		//logger.info("och info::" + wdmsnc);
 	  			cachedClient.set("OCH-RESOURCE-"+ wdmsnc.getSncId(), 0, wdmsnc);
 	  			continue ; 
@@ -2037,7 +2037,6 @@ public class BusiAnalyser {
 	  		*/
 	  		
 	  		if( wdmsnc.getReverseAdded() ){
-	  			System.out.println(7890);
 	  			continue ; 
 	  		}
 	  		
@@ -2052,8 +2051,6 @@ public class BusiAnalyser {
 	    	zdResult.setDirection(wdmsnc.getDirection());
 	    	zdResult.setPassedPtplist(wdmsnc.getPassedPtplist());
 	    	zdResult.setHeadptpStr(wdmsnc.getHeadptpStr());
-	    	
-	    	
 	    	
 	    	LinkedHashMap<String,LinkedList<ZdResultSingle>> zdmap = new LinkedHashMap<String,LinkedList<ZdResultSingle>>();
 	    	

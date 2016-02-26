@@ -16,6 +16,9 @@ public class JettyService {
 		Endpoint.publish(PropertiesHander.getProperty("webserviceURI"), Main.factory.getBean("routeCalculationImpl"));   
 		Endpoint.publish(PropertiesHander.getProperty("sncFreeOduServiceURI"), Main.factory.getBean("sncFreeOduCalculationImpl"));   
 		Endpoint.publish(PropertiesHander.getProperty("cardUsedPtplistURI"), Main.factory.getBean("cardUsedPtplistCalculationImpl")); 
+		//Endpoint.publish(PropertiesHander.getProperty("resourceYzURI"), Main.factory.getBean("ResourceYzImpl")); 
+		//Endpoint.publish(PropertiesHander.getProperty("resourceSzURI"), Main.factory.getBean("ResourceSzImpl")); 
+		//Endpoint.publish(PropertiesHander.getProperty("resourceReleaseURI"), Main.factory.getBean("ResourceReleaseImpl")); 
 		/**
 	    Server server = new Server();
 	    SelectChannelConnector connector = new SelectChannelConnector();

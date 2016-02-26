@@ -7,7 +7,7 @@
 'D:/workspaceNew/isearch/isearch-otn/src/main/java'
 -author
 -bottom
-'Copyright &#169; 2015. All Rights Reserved.'
+'Copyright &#169; 2016. All Rights Reserved.'
 -charset
 'UTF-8'
 -d
@@ -16,6 +16,8 @@
 'UTF-8'
 -doctitle
 'isearch-otn 0.0.1-SNAPSHOT API'
+-link
+'http://java.sun.com/j2se/1.5.0/docs/api'
 -use
 -version
 -windowtitle
